@@ -323,7 +323,8 @@ namespace OrleansClient.Analysis
 
 		private async Task WaitForTerminationAsync()
 		{
-			while (this.dispatchersStatus.Any(e => e.Value == EffectsDispatcherStatus.Busy) && AnalysisClient.ExperimentStatus != ExperimentStatus.Cancelled)
+			while (this.dispatchersStatus.Any(e => e.Value == EffectsDispatcherStatus.Busy) &&
+				AnalysisClient.ExperimentStatus != ExperimentStatus.Cancelled)
 			{
 				Logger.LogForDebug(GrainClient.Logger, "@@[Client] Waiting for termination...");
 				await Task.Delay(AnalysisConstants.WaitForTerminationDelay);
