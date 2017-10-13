@@ -23,13 +23,16 @@ namespace WebAPI
 
             try
             {
-                var analyzer = SolutionAnalyzer.CreateFromTest(testName);
+                var analyzer = SolutionAnalyzer.CreateFromTest(GrainClient.Instance, testName);
                 var analysisClient = new AnalysisClient(analyzer, machines);
-                //var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
-                analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
 
-                //result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
-                result = string.Format("Running test {0}.", testName);
+				//var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+				analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+				//result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
+				result = string.Format("Running test {0}.", testName);
             }
             catch (Exception exc)
             {
@@ -52,13 +55,16 @@ namespace WebAPI
                     expID = solutionName;
                 }
                 solutionPath = Path.Combine(drive + ":\\" + solutionPath, solutionName + ".sln");
-                var analyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+                var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
                 var analysisClient = new AnalysisClient(analyzer, machines);
-                //var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
-                analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
 
-                //result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
-                result = string.Format("Analyzing solution {0}.", solutionName);
+				//var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+				analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+				//result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
+				result = string.Format("Analyzing solution {0}.", solutionName);
             }
             catch (Exception exc)
             {

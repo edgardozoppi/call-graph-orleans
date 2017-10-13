@@ -9,6 +9,7 @@ using System.IO;
 using Common;
 using OrleansClient.Analysis;
 using OrleansClient.Statistics;
+using Orleans.TestingHost;
 
 namespace Tests
 {
@@ -16,34 +17,68 @@ namespace Tests
 
 	internal static class TestUtils
     {
-        public static void AnalyzeExample(string source, RunChecks checker, AnalysisStrategyKind strategy = AnalysisStrategyKind.NONE)
+		private static TestCluster host;
+
+		private static IClusterClient GrainClient
+		{
+			get { return host != null ? host.Client : null; }
+		}
+
+		public static void TestInitialize()
+		{
+			if (host == null)
+			{
+				var clusterConfiguration = new Orleans.Runtime.Configuration.ClusterConfiguration();
+				clusterConfiguration.LoadFromFile("OrleansServerConfiguration.xml");
+				var clientConfiguration = Orleans.Runtime.Configuration.ClientConfiguration.LoadFromFile("OrleansClientConfiguration.xml");
+				host = new TestCluster(clusterConfiguration, clientConfiguration);
+				host.Deploy();
+			}
+		}
+
+		public static void TestCleanup()
+		{
+			if (host != null)
+			{
+				foreach (var silo in host.GetActiveSilos())
+				{
+					host.KillSilo(silo);
+				}
+
+				host.KillClient();
+				//host.StopAllSilos();
+				host = null;
+			}
+		}
+
+		public static void AnalyzeExample(string source, RunChecks checker, AnalysisStrategyKind strategy = AnalysisStrategyKind.NONE)
         {
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
             //var solution = ReachingTypeAnalysis.Utils.CreateSolution(source);
             //var solAnalyzer = new SolutionAnalyzer(solution);
-            var solAnalyzer = SolutionAnalyzer.CreateFromSource(source);
+            var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source);
             var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
 			{
-				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient.GrainFactory);
+				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient);
 				myStatsGrain.ResetStats().Wait();
 			}
 
             checker(solAnalyzer, callgraph);
-        }
+		}
 
 		public static void AnalyzeExample(string source, RunChecks initialChecker, Action<SolutionAnalyzer> updates, RunChecks updatesChecker, AnalysisStrategyKind strategy = AnalysisStrategyKind.NONE)
 		{
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 			//var solution = ReachingTypeAnalysis.Utils.CreateSolution(source);
 			//var solAnalyzer = new SolutionAnalyzer(solution);
-			var solAnalyzer = SolutionAnalyzer.CreateFromSource(source);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source);
 			var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
 			{
-				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient.GrainFactory);
+				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient);
 				myStatsGrain.ResetStats().Wait();
 			}
 
@@ -57,28 +92,28 @@ namespace Tests
         {
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 
-			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath);
             var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
 			{
-				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient.GrainFactory);
+				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient);
 				myStatsGrain.ResetStats().Wait();
 			}
 
 			checker(solAnalyzer, callgraph);
-        }
+		}
 
 		public static void AnalyzeSolution(string solutionPath, RunChecks initialChecker, Action<SolutionAnalyzer> updates, RunChecks updatesChecker, AnalysisStrategyKind strategy = AnalysisStrategyKind.NONE)
 		{
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 
-			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath);
 			var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
 			{
-				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient.GrainFactory);
+				var myStatsGrain = StatsHelper.GetStatGrain(GrainClient);
 				myStatsGrain.ResetStats().Wait();
 			}
 
@@ -93,7 +128,7 @@ namespace Tests
 			var currentSolutionPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
 			currentSolutionPath = Path.GetDirectoryName(currentSolutionPath);
 			
-			solutionPath = Path.Combine(currentSolutionPath, @"..\..\..\TestsSolutions", solutionPath);
+			solutionPath = Path.Combine(currentSolutionPath, @"..\..\..\TestSolutions", solutionPath);
 			solutionPath = Path.GetFullPath(solutionPath);
 
 			Assert.IsTrue(File.Exists(solutionPath));

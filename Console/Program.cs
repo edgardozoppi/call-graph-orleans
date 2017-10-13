@@ -94,7 +94,7 @@ namespace Console
 			System.Console.WriteLine("Analyzing solution...");
 
 			this.Initialize();
-			var analyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+			var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
 			analyzer.RootKind = AnalysisRootKind.RootMethods;
 			analyzer.AnalyzeAsync(strategyKind).Wait();
 

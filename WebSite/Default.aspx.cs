@@ -69,12 +69,15 @@ namespace WebSite
 					var rootKind = Utils.ToAnalysisRootKind(tokens[5]);
 
 					var solutionFileName = Path.Combine(pathPrefix, solutionPath);
-					var analyzer = SolutionAnalyzer.CreateFromSolution(solutionFileName);
+					var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionFileName);
 
 					var analysisClient = new AnalysisClient(analyzer, machines);
-					// await analysisClient.Analyze();
+					//await analysisClient.Analyze();
+
 					//await analysisClient.RunExperiment(GrainClient.GrainFactory, solutionPath.Replace('\\','-').Replace('.','-'));
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 					analysisClient.StartRunningExperiment(GrainClient.GrainFactory, solutionPath.Replace('\\', '-').Replace('.', '-'), rootKind);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 					//var reachableMethods = await RunAnalysisAsync(machines, pathPrefix, solutionPath);
 					//string methods = String.Join("\n", reachableMethods);
@@ -101,7 +104,7 @@ namespace WebSite
 			var currentSolutionPath = pathPrefix;			
             var solutionFileName = Path.Combine(currentSolutionPath, solutionRelativePath);
 
-			var analyzer = SolutionAnalyzer.CreateFromSolution(solutionFileName);
+			var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionFileName);
 
 			var analysisClient = new AnalysisClient(analyzer, machines);
 			var callgraph =  await analysisClient.Analyze();
@@ -112,7 +115,7 @@ namespace WebSite
 
 		private static async Task<ISet<MethodDescriptor>> RunAnalysisFromSourceAsync(int machines, string source)
 		{
-			var analyzer = SolutionAnalyzer.CreateFromSource(source);
+			var analyzer = SolutionAnalyzer.CreateFromSource(GrainClient.Instance, source);
 			var analysisClient = new AnalysisClient(analyzer, machines);
 			var callgraph = await analysisClient.Analyze();
 
@@ -156,12 +159,14 @@ namespace WebSite
                 var repetitions = int.Parse(tokens[3]);
                 var machines = int.Parse(tokens[4]);
 
-				var analyzer = SolutionAnalyzer.CreateFromTest(testName);
+				var analyzer = SolutionAnalyzer.CreateFromTest(GrainClient.Instance, testName);
 				var analysisClient = new AnalysisClient(analyzer, machines);
-
 				//var stopWatch = Stopwatch.StartNew();
+
 				//var results = await analysisClient.RunExperiment(GrainClient.GrainFactory);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 				analysisClient.StartRunningExperiment(GrainClient.GrainFactory);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 				//stopWatch.Stop();
 				Application["AnalysisClient"] = analysisClient;

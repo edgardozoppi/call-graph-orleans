@@ -5,7 +5,6 @@ using OrleansClient.Analysis;
 
 namespace Tests
 {
-	[TestClass]
 	public class BasicTests 
 	 {
 		public static void TestRemoveMethodSimpleCall(AnalysisStrategyKind strategy)
@@ -57,9 +56,10 @@ class Program
     }
 }";
 			#endregion
-
-            #region modified source code
-            var newSource = @"
+			
+			#region modified source code
+			/*
+			var newSource = @"
 using System;
 public class D:C
 {
@@ -100,6 +100,7 @@ class Program
         k.m3();
     }
 }";
+			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,
@@ -107,7 +108,7 @@ class Program
 				{
 					Assert.IsTrue(s.IsReachable(new MethodDescriptor("C", "m1"), callgraph));
 					Assert.IsTrue(s.IsReachable(new MethodDescriptor("D", "m2"), callgraph));
-//					Assert.IsTrue(result.IsReachable(new MethodDescriptor(new TypeDescriptor("System", "Object", "mscorlib"), "Equals", false), callgraph));
+					//Assert.IsTrue(result.IsReachable(new MethodDescriptor(new TypeDescriptor("System", "Object", "mscorlib"), "Equals", false), callgraph));
 					Assert.IsFalse(s.IsReachable(new MethodDescriptor("C", "m2"), callgraph));
 					Assert.IsTrue(s.IsCaller(new MethodDescriptor("C", "m1"), new MethodDescriptor("D", "m2"), callgraph));
                     Assert.IsTrue(s.IsReachable(new MethodDescriptor("D", "m3"), callgraph));
@@ -154,6 +155,7 @@ class Program
 			#endregion
 
 			#region modified source code
+			/*
 			var newSource = @"
 using System;
 
@@ -169,6 +171,7 @@ class Program
 		NewMethod(5);
     }
 }";
+			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,
@@ -242,6 +245,7 @@ class Program
 			#endregion
 
 			#region modified source code
+			/*
 			var newSource = @"
 using System;
 
@@ -285,6 +289,7 @@ class Program
 		d.Middle(d);
     }
 }";
+			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,

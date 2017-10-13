@@ -17,6 +17,7 @@ using System.Text;
 using OrleansClient;
 using Common;
 using OrleansClient.Analysis;
+using Orleans;
 
 namespace Tests
 {
@@ -1360,14 +1361,14 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandAsync1()
+        public void AnalyzeGenerationSolutionOnDemandAsync1()
         {
             AnalyzeGenerationSolution1(AnalysisStrategyKind.ONDEMAND_ASYNC);
         }
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandSync1()
+        public void AnalyzeGenerationSolutionOnDemandSync1()
         {
             AnalyzeGenerationSolution1(AnalysisStrategyKind.ONDEMAND_SYNC);
         }
@@ -1380,7 +1381,7 @@ namespace Tests
             Logger.Instance.Log("CallGraphGenerator", "AnalyzeGenerationSolution1", "source code: {0}", source);
             //var solution = ReachingTypeAnalysis.Utils.CreateSolution(source);
             //Logger.Instance.Log("CallGraphGenerator", "AnalyzeGenerationSolution1", "solution filename: {0}", solution.FilePath);
-            var solAnalyzer = SolutionAnalyzer.CreateFromSource(source);
+            var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient.Instance, source);
             var resolved = solAnalyzer.Analyze(strategy);
             //var resolved = solAnalyzer.GenerateCallGraph();
             var resolvedNodes = resolved.GetNodes().Count();
@@ -1407,13 +1408,14 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandAsync2() {
+        public void AnalyzeGenerationSolutionOnDemandAsync2()
+		{
             AnalyzeGenerationSolution2(AnalysisStrategyKind.ONDEMAND_ASYNC);
         }
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandSync2()
+        public void AnalyzeGenerationSolutionOnDemandSync2()
         {
             AnalyzeGenerationSolution2(AnalysisStrategyKind.ONDEMAND_SYNC);
         }
@@ -1425,14 +1427,14 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandAsync3()
+        public void AnalyzeGenerationSolutionOnDemandAsync3()
         {
             AnalyzeGenerationSolution3(AnalysisStrategyKind.ONDEMAND_ASYNC);
         }
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandSync3()
+        public void AnalyzeGenerationSolutionOnDemandSync3()
         {
             AnalyzeGenerationSolution3(AnalysisStrategyKind.ONDEMAND_SYNC);
         }
@@ -1444,14 +1446,14 @@ namespace Tests
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandAsync4()
+        public void AnalyzeGenerationSolutionOnDemandAsync4()
         {
             AnalyzeGenerationSolution4(AnalysisStrategyKind.ONDEMAND_ASYNC);
         }
 
         [TestMethod]
         [TestCategory("Generation")]
-        public static void AnalyzeGenerationSolutionOnDemandSync4()
+        public void AnalyzeGenerationSolutionOnDemandSync4()
         {
             AnalyzeGenerationSolution4(AnalysisStrategyKind.ONDEMAND_SYNC);
         }
@@ -1490,41 +1492,45 @@ namespace Tests
 
             Assert.IsTrue(resolved.GetEdges().Count() == callgraph.GetEdges().Count());
         }*/
+
         [TestMethod]
         [TestCategory("Generation")]
         //[TestCategory("OnDemandOrleans")]
-        public static void AnalyzeGenerationOnDemandOrleans1()
+        public void AnalyzeGenerationOnDemandOrleans1()
         {
             AnalyzeGenerationSolution(AnalysisStrategyKind.ONDEMAND_SYNC, 10);
         }
+
         [TestMethod]
         [TestCategory("Generation")]
         //[TestCategory("OnDemandOrleans")]
-        public static void AnalyzeGenerationOnDemandOrleans2()
+        public void AnalyzeGenerationOnDemandOrleans2()
         {
             AnalyzeGenerationSolution(AnalysisStrategyKind.ONDEMAND_SYNC, 50);
         }
+
         [TestMethod]
         [TestCategory("Generation")]
         //[TestCategory("OnDemandOrleans")]
-        public static void AnalyzeGenerationOnDemandOrleans3()
+        public void AnalyzeGenerationOnDemandOrleans3()
         {
             AnalyzeGenerationSolution(AnalysisStrategyKind.ONDEMAND_SYNC, 100);
         }
+
         [TestMethod]
         [TestCategory("Generation")]
         //[TestCategory("OnDemandOrleans")]
-        public static void AnalyzeGenerationOnDemandOrleans4()
+        public void AnalyzeGenerationOnDemandOrleans4()
         {
             AnalyzeGenerationSolution(AnalysisStrategyKind.ONDEMAND_SYNC, 1000);
         }
+
         [TestMethod]
         [TestCategory("Generation")]
         //[TestCategory("OnDemandOrleans")]
-        public static void AnalyzeGenerationOnDemandOrleans5()
+        public void AnalyzeGenerationOnDemandOrleans5()
         {
             AnalyzeGenerationSolution(AnalysisStrategyKind.ONDEMAND_SYNC, 10000);
         }
     }
-
 }

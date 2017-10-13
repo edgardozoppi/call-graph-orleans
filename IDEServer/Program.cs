@@ -81,7 +81,7 @@ Listening on Port {0} ...
 
 			this.Initialize();
 			this.solutionPath = solutionPath;
-			this.analyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+			this.analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
 			analyzer.AnalyzeAsync(strategyKind).Wait();
 
 			OrleansController.SolutionManager = analyzer.SolutionManager;

@@ -7,15 +7,18 @@ using System;
 namespace Tests
 {
 	[TestClass]
-	public class IncrementalOrleansTests : TestingSiloHost
+	public class IncrementalOrleansTests
 	{
-		[ClassCleanup]
-		public static void ClassCleanup()
+		[TestInitialize]
+		public void TestInitialize()
 		{
-			// Optional. 
-			// By default, the next test class which uses TestignSiloHost will
-			// cause a fresh Orleans silo environment to be created.
-			StopAllSilosIfRunning();
+			TestUtils.TestInitialize();
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			TestUtils.TestCleanup();
 		}
 
 		[TestMethod]

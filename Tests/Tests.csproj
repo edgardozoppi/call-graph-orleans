@@ -220,7 +220,6 @@
   <ItemGroup>
     <Compile Include="BasicTest.cs" />
     <Compile Include="CallGraphGenerator.cs" />
-    <Compile Include="ConcurrencyTest.cs" />
     <Compile Include="Incremental.cs" />
     <Compile Include="IncrementalAsync.cs" />
     <Compile Include="IncrementalDiff.cs" />
@@ -269,10 +268,10 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ClientConfigurationForTesting.xml">
+    <Content Include="OrleansClientConfiguration.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="OrleansConfigurationForTesting.xml">
+    <Content Include="OrleansServerConfiguration.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

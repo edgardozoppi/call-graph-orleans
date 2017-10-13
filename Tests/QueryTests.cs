@@ -30,8 +30,20 @@ namespace Tests
     }
 
     [TestClass]
-    public partial class QueryTestsOrleans : TestingSiloHost
+    public partial class QueryTestsOrleans
     {
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			TestUtils.TestInitialize();
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			TestUtils.TestCleanup();
+		}
+
 		[TestMethod]
 		[TestCategory("Query")]
 		public void TestQueryOrleans1()

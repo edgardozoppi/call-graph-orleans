@@ -33,35 +33,37 @@ namespace OrleansClient.Analysis
 		private string testName;
 		private IDictionary<Guid, EffectsDispatcherStatus> dispatchersStatus;
 
+		public IClusterClient GrainClient { get; private set; }
 		public ISolutionManager SolutionManager { get; private set; }
         public AnalysisRootKind RootKind { get; set; } 
 
 		public static int MessageCounter { get; private set; }
 
-		private SolutionAnalyzer()
+		private SolutionAnalyzer(IClusterClient grainClient)
 		{
+			this.GrainClient = grainClient;
 			this.dispatchersStatus = new Dictionary<Guid, EffectsDispatcherStatus>();
 		}
 
-		public static SolutionAnalyzer CreateFromSolution(string solutionPath)
+		public static SolutionAnalyzer CreateFromSolution(IClusterClient grainClient, string solutionPath)
         {
-            var analyzer = new SolutionAnalyzer();
+            var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.solutionPath = solutionPath;
             analyzer.RootKind = AnalysisRootKind.Default;
 			return analyzer;
         }
 
-		public static SolutionAnalyzer CreateFromSource(string source)
+		public static SolutionAnalyzer CreateFromSource(IClusterClient grainClient, string source)
 		{
-			var analyzer = new SolutionAnalyzer();
+			var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.source = source;
             analyzer.RootKind = AnalysisRootKind.Default;
             return analyzer;
 		}
 
-		public static SolutionAnalyzer CreateFromTest(string testName)
+		public static SolutionAnalyzer CreateFromTest(IClusterClient grainClient, string testName)
 		{
-			var analyzer = new SolutionAnalyzer();
+			var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.testName= testName;
             analyzer.RootKind = AnalysisRootKind.Default;
             return analyzer;
@@ -187,12 +189,10 @@ namespace OrleansClient.Analysis
 			SolutionAnalyzer.MessageCounter = 0;
 			//GrainClient.ClientInvokeCallback = OnClientInvokeCallBack;
 
-			GrainClient.Initialize("ClientConfigurationForTesting.xml");
-
 			// For orleans we cannot use the strategy to create a solution
 			// The solution grain creates an internal strategy and contain an internal 
 			// solution manager. We obtain the solution grain that handles everything
-			var solutionGrain = OrleansSolutionManager.GetSolutionGrain(GrainClient.GrainFactory);
+			var solutionGrain = OrleansSolutionManager.GetSolutionGrain(GrainClient);
 			this.SolutionManager = solutionGrain;
 
 			if (this.source != null)
@@ -258,11 +258,11 @@ namespace OrleansClient.Analysis
 			Logger.LogInfo(GrainClient.Logger, "SolutionAnalyzer", "ContinueOnDemandOrleansAnalysis", "Message count {0}", MessageCounter);
 			//return callGraph;
 		}
-		
+
 		private async Task SubscribeToAllDispatchersAsync()
 		{
 			var tasks = new List<Task>();
-			var objref = await GrainClient.GrainFactory.CreateObjectReference<IAnalysisObserver>(this);
+			var objref = await GrainClient.CreateObjectReference<IAnalysisObserver>(this);
 
 			this.dispatchersStatus.Clear();
 
@@ -270,7 +270,7 @@ namespace OrleansClient.Analysis
 			{
 				var dispatcherId = string.Format(AnalysisConstants.StreamGuidFormat, i);
 				var dispatcherGuid = Guid.Parse(dispatcherId);				
-				var dispatcher = OrleansEffectsDispatcherManager.GetEffectsDispatcherGrain(GrainClient.GrainFactory, dispatcherGuid);
+				var dispatcher = OrleansEffectsDispatcherManager.GetEffectsDispatcherGrain(GrainClient, dispatcherGuid);
 
 				this.dispatchersStatus.Add(dispatcherGuid, EffectsDispatcherStatus.Busy);
 
@@ -311,7 +311,7 @@ namespace OrleansClient.Analysis
 
 		private Task<IMethodEntityGrain> GetMethodEntityGrainAndActivateInProject(MethodDescriptor method)
 		{
-			var methodEntityGrain = OrleansMethodEntity.GetMethodEntityGrain(GrainClient.GrainFactory, method);
+			var methodEntityGrain = OrleansMethodEntity.GetMethodEntityGrain(GrainClient, method);
 			return Task.FromResult(methodEntityGrain);
 
 			//var methodEntityProc = await this.SolutionManager.GetMethodEntityAsync(method); //as IMethodEntityGrain;

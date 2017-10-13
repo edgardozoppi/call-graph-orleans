@@ -9,6 +9,7 @@ using System.IO;
 using System.Web;
 using Common;
 using OrleansClient.Analysis;
+using Orleans;
 
 namespace WebAPI
 {
@@ -51,7 +52,7 @@ namespace WebAPI
 			}
 
 			OrleansController.solutionPath = solutionPath;
-			OrleansController.analyzer = SolutionAnalyzer.CreateFromSolution(solutionPath);
+			OrleansController.analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
 			await analyzer.AnalyzeAsync(strategyKind);
 
 			// This call is to fill the documentsAssemblyName mapping

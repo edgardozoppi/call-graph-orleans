@@ -7,18 +7,21 @@ using System;
 namespace Tests
 {
     [TestClass]
-    public partial class OrleansTests : TestingSiloHost
+    public partial class OrleansTests
     {
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            // Optional. 
-            // By default, the next test class which uses TestignSiloHost will
-            // cause a fresh Orleans silo environment to be created.
-            StopAllSilosIfRunning();
-        }
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			TestUtils.TestInitialize();
+		}
 
-        [TestMethod]
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			TestUtils.TestCleanup();
+		}
+
+		[TestMethod]
         [TestCategory("Soundness")]
         [TestCategory("OnDemandOrleans")]
         public void TestSimpleCallOnDemandOrleans()
