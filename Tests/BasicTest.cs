@@ -2,6 +2,7 @@
 using Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OrleansClient.Analysis;
+using System.IO;
 
 namespace Tests
 {
@@ -58,7 +59,6 @@ class Program
 			#endregion
 			
 			#region modified source code
-			/*
 			var newSource = @"
 using System;
 public class D:C
@@ -100,7 +100,6 @@ class Program
         k.m3();
     }
 }";
-			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,
@@ -121,9 +120,12 @@ class Program
 				},
 				(s) =>
 				{
+					File.WriteAllText(TestConstants.DocumentPath, newSource);
 					var modifiedDocuments = new string[] { TestConstants.DocumentPath };
 
-					s.ApplyModificationsAsync(modifiedDocuments);
+					s.ApplyModificationsAsync(modifiedDocuments).Wait();
+
+					File.Delete(TestConstants.DocumentPath);
 
 					//var type = new TypeDescriptor("", "D");
 					//var parameters = new TypeDescriptor[] { new TypeDescriptor("", "C") };
@@ -155,7 +157,7 @@ class Program
 			#endregion
 
 			#region modified source code
-			/*
+			
 			var newSource = @"
 using System;
 
@@ -171,7 +173,6 @@ class Program
 		NewMethod(5);
     }
 }";
-			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,
@@ -181,9 +182,12 @@ class Program
 				},
 				(s) =>
 				{
+					File.WriteAllText(TestConstants.DocumentPath, newSource);
 					var modifiedDocuments = new string[] { TestConstants.DocumentPath };
 
-					s.ApplyModificationsAsync(modifiedDocuments);
+					s.ApplyModificationsAsync(modifiedDocuments).Wait();
+
+					File.Delete(TestConstants.DocumentPath);
 
 					//s.AddMethodAsync(new MethodDescriptor("Program", "NewMethod", true), newSource).Wait();
 					//s.UpdateMethodAsync(new MethodDescriptor("Program", "Main", true), newSource).Wait();
@@ -245,7 +249,6 @@ class Program
 			#endregion
 
 			#region modified source code
-			/*
 			var newSource = @"
 using System;
 
@@ -289,7 +292,6 @@ class Program
 		d.Middle(d);
     }
 }";
-			*/
 			#endregion
 
 			TestUtils.AnalyzeExample(source,
@@ -303,9 +305,12 @@ class Program
 				},
 				(s) =>
 				{
+					File.WriteAllText(TestConstants.DocumentPath, newSource);
 					var modifiedDocuments = new string[] { TestConstants.DocumentPath };
 
-					s.ApplyModificationsAsync(modifiedDocuments);
+					s.ApplyModificationsAsync(modifiedDocuments).Wait();
+
+					File.Delete(TestConstants.DocumentPath);
 
 					//var type = new TypeDescriptor("", "D");
 					//var parameters = new TypeDescriptor[] { new TypeDescriptor("", "C") };

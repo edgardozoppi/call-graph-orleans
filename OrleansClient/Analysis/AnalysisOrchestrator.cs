@@ -748,7 +748,7 @@ namespace OrleansClient.Analysis
 			// This is only for overrides
 			foreach (var method in methodsAdded)
 			{
-				// TODO: is the method is an overrride reanalyze callers of *base* method
+				// TODO: if the method is an override reanalyze callers of *base* method
 				// For the case of overload we need to detect the callers of all possible overloads for all "compatible" types
 				var codeProvider = await this.solutionManager.GetProjectCodeProviderAsync(method);
 
@@ -758,7 +758,7 @@ namespace OrleansClient.Analysis
 				if (propagationEffects.CallersInfo.Count > 0)
 				{
 					// For each caller we need to do the following
-					// 0: Propagate forward the deletion of the previous calle (now overriden)
+					// 0: Propagate forward the deletion of the previous callee (now overriden)
 					// TODO: Maybe this needs to be done before reloading the project [but we need another way of discovering the override]
 					// ANOTHER OPTION: Get in the list of modifications the overriden methods with a qualifier [OVERRIDEN]
 					// in this way we can move this to the previous 
@@ -768,7 +768,7 @@ namespace OrleansClient.Analysis
 					await this.PropagateFromCallersAsync(propagationEffects.CallersInfo, PropagationKind.ADD_TYPES);
 
 					// 2: In the overriden method we need to remove the callers that do not call this method any longer 
-					// [they are the caller that have the type of the subclass as possible type as receiver of the invocation]
+					// [they are the callers that have the type of the subclass as possible type of the receiver of the invocation]
 
 					var methodEntityWP = await codeProvider.GetMethodEntityAsync(method);
 					var callersOfMethod = await methodEntityWP.GetCallersAsync();

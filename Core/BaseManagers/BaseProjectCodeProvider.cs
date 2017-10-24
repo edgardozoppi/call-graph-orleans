@@ -97,6 +97,7 @@ namespace OrleansClient.Analysis
 		{
 			var cancellationTokenSource = new CancellationTokenSource();
 			var solution = SolutionFileGenerator.CreateSolution(source);
+			this.projectPath = TestConstants.ProjectPath;
 			this.project = solution.Projects.Single(p => p.AssemblyName == assemblyName);
 			this.compilation = await Utils.CompileProjectAsync(this.Project, cancellationTokenSource.Token);
 		}
@@ -135,10 +136,15 @@ namespace OrleansClient.Analysis
 		private async Task<DocumentInfo> GetDocumentInfoAsync(string documentPath)
 		{
 			DocumentInfo documentInfo = null;
+			documentPath = Path.GetFullPath(documentPath);
 
 			if (!this.DocumentsInfo.TryGetValue(documentPath, out documentInfo))
             {
-				var document = this.Project.Documents.SingleOrDefault(doc => doc.FilePath.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase));
+				var document = this.Project.Documents.SingleOrDefault(doc =>
+				{
+					var filePath = Path.GetFullPath(doc.FilePath);
+					return filePath.Equals(documentPath, StringComparison.InvariantCultureIgnoreCase);
+				});
 
 				if (document != null)
 				{
@@ -432,6 +438,9 @@ namespace OrleansClient.Analysis
 				newDocumentPath = documentPath;
 			}
 
+			documentPath = Path.GetFullPath(documentPath);
+			newDocumentPath = Path.GetFullPath(newDocumentPath);
+
 			var sourceText = File.ReadAllText(newDocumentPath);
 			return this.ReplaceDocumentSourceAsync(sourceText, documentPath);
 		}
@@ -445,6 +454,7 @@ namespace OrleansClient.Analysis
 		private void RemoveDocumentInfo(string documentPath)
 		{
 			DocumentInfo documentInfo;
+			documentPath = Path.GetFullPath(documentPath);
 
 			if (this.DocumentsInfo.TryGetValue(documentPath, out documentInfo))
 			{

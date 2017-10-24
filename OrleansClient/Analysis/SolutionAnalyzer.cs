@@ -56,15 +56,16 @@ namespace OrleansClient.Analysis
 		public static SolutionAnalyzer CreateFromSource(IClusterClient grainClient, string source)
 		{
 			var analyzer = new SolutionAnalyzer(grainClient);
+			analyzer.solutionPath = TestConstants.SolutionPath;
 			analyzer.source = source;
-            analyzer.RootKind = AnalysisRootKind.Default;
+			analyzer.RootKind = AnalysisRootKind.Default;
             return analyzer;
 		}
 
 		public static SolutionAnalyzer CreateFromTest(IClusterClient grainClient, string testName)
 		{
 			var analyzer = new SolutionAnalyzer(grainClient);
-			analyzer.testName= testName;
+			analyzer.testName = testName;
             analyzer.RootKind = AnalysisRootKind.Default;
             return analyzer;
 		}

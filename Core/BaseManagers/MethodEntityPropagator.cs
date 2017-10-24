@@ -73,6 +73,7 @@ namespace OrleansClient.Analysis
 
 			return PropagateAsync(propKind);
 		}
+
         public Task<PropagationEffects> PropagateAsync(PropagationKind propKind)
         {
             this.methodEntity.PropGraph.ResetUpdateCount();

@@ -67,6 +67,7 @@ namespace OrleansClient.Analysis
 		protected Task LoadSourceAsync(string source)
 		{
 			var solution = SolutionFileGenerator.CreateSolution(source);
+			this.solutionPath = TestConstants.SolutionPath;
 			this.projects = Utils.FilterProjects(solution);
 
 			return this.CreateProjectCodeProviderFromSourceAsync(source, TestConstants.ProjectAssemblyName);

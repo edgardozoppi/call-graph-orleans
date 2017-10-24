@@ -14,9 +14,11 @@ namespace Common
 		public const string ProjectName = "MyProject";
 		public const string ProjectAssemblyName = "MyProject";
 		public const string DocumentName = "MyFile.cs";
-		public const string DocumentPath = @"C:\MyFile.cs";
-		public const string SolutionPath = @"test.sln";
-		public const string TestDirectory = "test";
+		public const string DocumentPath = @"..\..\..\TestSolutions\Test\MyFile.cs";
+		public const string ProjectPath = @"..\..\..\TestSolutions\Test\MyProject.csproj";
+		public const string SolutionPath = @"..\..\..\TestSolutions\Test\Test.sln";
+
+		public const string TestDirectory = "Test";
 		public const string TemporarySolutionDirectory = "temp";
 		public const string TemporaryNamespace = "Temporary";
 	}
