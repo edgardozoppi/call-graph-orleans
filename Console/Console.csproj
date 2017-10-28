@@ -119,6 +119,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandRunner.cs" />
     <Compile Include="OrleansHostWrapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -135,6 +136,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{cde193f4-f4f6-44c7-98ac-64aa07feee0c}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{a20de7ae-0d2c-4af7-8f28-2d3211e1a55c}</Project>
+      <Name>Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\OrleansClient\OrleansClient.csproj">
       <Project>{bde431d5-73dc-479e-ac24-b6dcda247a4c}</Project>

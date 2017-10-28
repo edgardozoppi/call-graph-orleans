@@ -155,6 +155,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CodeGraphModel\CodeGraphModel.csproj">
+      <Project>{55b3035f-2852-4b39-a235-7627d108373d}</Project>
+      <Name>CodeGraphModel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{cde193f4-f4f6-44c7-98ac-64aa07feee0c}</Project>
       <Name>Common</Name>

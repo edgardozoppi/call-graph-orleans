@@ -84,8 +84,8 @@ namespace Common
 		TestMethods,
 		PublicMethods,
 		RootMethods,
-        //Default = RootMethods
-        Default = MainMethods
+        Default = RootMethods
+        //Default = MainMethods
     }
 
 	[Serializable]

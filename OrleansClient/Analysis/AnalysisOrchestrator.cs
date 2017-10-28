@@ -113,38 +113,40 @@ namespace OrleansClient.Analysis
 
 			await this.ProcessMessages();
 
-			// TODO: Remove these lines
-			var reachableMethodsCount = await this.solutionManager.GetReachableMethodsCountAsync();
-
-			if (GrainClient.IsInitialized)
-			{
-				Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
-			}
-
-			Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
+			//---------------------------
+			//// TODO: Remove these lines
+			//var reachableMethodsCount = await this.solutionManager.GetReachableMethodsCountAsync();
+			//
+			//if (GrainClient.IsInitialized)
+			//{
+			//	Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
+			//}
+			//
+			//Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
+			//---------------------------
 
 			//var newlyResolvedCalleesCount = 0;
-
+			//
 			//do
 			//{
 			//	newlyResolvedCalleesCount = await this.PropagateUsingDeclaredTypes();
 			//	await this.ProcessMessages();
-
+			//
 			//	// TODO: Remove these lines
 			//	reachableMethodsCount = await this.solutionManager.GetReachableMethodsCountAsync();
-
+			//
 			//	if (GrainClient.IsInitialized)
 			//	{
 			//		Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
 			//	}
-
+			//
 			//	Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
 			//}
 			//while (newlyResolvedCalleesCount > 0);
 		}
 
 		//private async Task<ISet<MethodDescriptor>> PropagateUsingDeclaredTypes()
-        private async Task<int> PropagateUsingDeclaredTypes()
+		private async Task<int> PropagateUsingDeclaredTypes()
 		{
 			var roots = await this.solutionManager.GetRootsAsync();
 			var worklist = new Queue<MethodDescriptor>(roots);
@@ -716,6 +718,10 @@ namespace OrleansClient.Analysis
 			Logger.Log("Removed methods:\n{0}", string.Join("\n", methodsRemoved));
 			Logger.Log("Modified methods:\n{0}", string.Join("\n", methodsUpdated));
 			Logger.Log("Added methods:\n{0}", string.Join("\n", methodsAdded));
+
+			Console.WriteLine("Removed methods: {0}", methodsRemoved.Count());
+			Console.WriteLine("Modified methods: {0}", methodsUpdated.Count());
+			Console.WriteLine("Added methods: {0}", methodsAdded.Count());
 
 			var methodsRemovedOrUpdated = methodsRemoved.Union(methodsUpdated);
 			var methodsAddedOrUpdated = methodsAdded.Union(methodsUpdated);
