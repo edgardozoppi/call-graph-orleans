@@ -215,15 +215,14 @@ namespace OrleansClient.Analysis
                 if (parameterNode != null)
                 {
 					//TODO: Hack. Remove later!
-					ISet<TypeDescriptor> argumentPossibleTypes = null;
+					var argumentPossibleTypes = new HashSet<TypeDescriptor>();
 
 					if (i < callMessageInfo.ArgumentsPossibleTypes.Count)
 					{
-						argumentPossibleTypes = callMessageInfo.ArgumentsPossibleTypes[i];
+						argumentPossibleTypes.UnionWith(callMessageInfo.ArgumentsPossibleTypes[i]);
 					}
 					else
 					{
-						argumentPossibleTypes = new HashSet<TypeDescriptor>();
 						argumentPossibleTypes.Add(parameterNode.Type);
                     }
 
@@ -248,7 +247,8 @@ namespace OrleansClient.Analysis
 
             if (returnMessageInfo.LHS != null)
             {
-                await this.methodEntity.PropGraph.DiffPropAsync(returnMessageInfo.ResultPossibleTypes, returnMessageInfo.LHS, returnMessageInfo.PropagationKind);
+				var possibleTypes = returnMessageInfo.ResultPossibleTypes.ToList();
+				await this.methodEntity.PropGraph.DiffPropAsync(possibleTypes, returnMessageInfo.LHS, returnMessageInfo.PropagationKind);
             }
 
             /// We need to recompute possible calless 
