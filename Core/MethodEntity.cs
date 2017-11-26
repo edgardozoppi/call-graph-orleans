@@ -226,7 +226,7 @@ namespace OrleansClient.Analysis
         }
 
         /// <summary>
-        /// This is used by the incremental analysis when a caller is removed of modified
+        /// This is used by the incremental analysis when a caller is removed or modified
         /// </summary>
         /// <param name="context"></param>
         public void RemoveFromCallers(CallContext context)

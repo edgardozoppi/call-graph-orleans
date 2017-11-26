@@ -805,10 +805,12 @@ namespace OrleansClient.Roslyn
 		public override AnalysisExpression VisitArgument(ArgumentSyntax node)
 		{
 			var analysisExpression = Visit(node.Expression);
-			if (analysisExpression != null)
-			{
-				analysisExpression.ProcessArgument(node, this);
-			}
+
+			//if (analysisExpression != null)
+			//{
+			//	analysisExpression.ProcessArgument(node, this);
+			//}
+
 			//if(analysisExpression is Property)
 			//{
 			//    Property property = analysisExpression as Property;
@@ -842,7 +844,7 @@ namespace OrleansClient.Roslyn
 			//{
 			//}
 
-			this.roslynMethodVisitor.InvocationPosition++;
+			//this.roslynMethodVisitor.InvocationPosition++;
 
 			// CHECK
 			var callExpression = node.Expression;
@@ -935,6 +937,8 @@ namespace OrleansClient.Roslyn
 
 				var args = ProcessArguments(node.ArgumentList, methodInvokedSymbol.Parameters);
 
+				this.roslynMethodVisitor.InvocationPosition++;
+
 				// Delegate? 
 				if (methodInvokedSymbol.MethodKind == MethodKind.DelegateInvoke)
 				{
@@ -968,13 +972,11 @@ namespace OrleansClient.Roslyn
 					VariableNode receiverArg = null;
 					if (!methodInvokedSymbol.IsStatic)
 					{
-
 						// Diego: Check types!
 						var receiver = TryToGetReceiver(node, methodInvokedSymbol);
 
 						if (receiver != null && receiver is VariableNode)
 						{
-
 							// Contract.Assert(receiver is VariableNode);
 
 							// Try to get receiver, when this is not given by the previous nested call
