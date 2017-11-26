@@ -45,28 +45,28 @@ namespace OrleansClient.Analysis
 			this.dispatchersStatus = new Dictionary<Guid, EffectsDispatcherStatus>();
 		}
 
-		public static SolutionAnalyzer CreateFromSolution(IClusterClient grainClient, string solutionPath)
+		public static SolutionAnalyzer CreateFromSolution(IClusterClient grainClient, string solutionPath, AnalysisRootKind rootKind = AnalysisRootKind.Default)
         {
             var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.solutionPath = solutionPath;
-            analyzer.RootKind = AnalysisRootKind.Default;
+            analyzer.RootKind = rootKind;
 			return analyzer;
         }
 
-		public static SolutionAnalyzer CreateFromSource(IClusterClient grainClient, string source)
+		public static SolutionAnalyzer CreateFromSource(IClusterClient grainClient, string source, AnalysisRootKind rootKind = AnalysisRootKind.Default)
 		{
 			var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.solutionPath = TestConstants.SolutionPath;
 			analyzer.source = source;
-			analyzer.RootKind = AnalysisRootKind.Default;
+			analyzer.RootKind = rootKind;
             return analyzer;
 		}
 
-		public static SolutionAnalyzer CreateFromTest(IClusterClient grainClient, string testName)
+		public static SolutionAnalyzer CreateFromTest(IClusterClient grainClient, string testName, AnalysisRootKind rootKind = AnalysisRootKind.Default)
 		{
 			var analyzer = new SolutionAnalyzer(grainClient);
 			analyzer.testName = testName;
-            analyzer.RootKind = AnalysisRootKind.Default;
+            analyzer.RootKind = rootKind;
             return analyzer;
 		}
 

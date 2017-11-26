@@ -56,7 +56,7 @@ namespace Tests
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
             //var solution = ReachingTypeAnalysis.Utils.CreateSolution(source);
             //var solAnalyzer = new SolutionAnalyzer(solution);
-            var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source);
+            var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source, AnalysisRootKind.MainMethods);
             var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
@@ -73,7 +73,7 @@ namespace Tests
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 			//var solution = ReachingTypeAnalysis.Utils.CreateSolution(source);
 			//var solAnalyzer = new SolutionAnalyzer(solution);
-			var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSource(GrainClient, source, AnalysisRootKind.MainMethods);
 			var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
@@ -92,7 +92,7 @@ namespace Tests
         {
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 
-			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath, AnalysisRootKind.MainMethods);
             var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)
@@ -108,7 +108,7 @@ namespace Tests
 		{
 			Environment.SetEnvironmentVariable("MyIPAddr", "127.0.0.1");
 
-			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath);
+			var solAnalyzer = SolutionAnalyzer.CreateFromSolution(GrainClient, solutionPath, AnalysisRootKind.MainMethods);
 			var callgraph = solAnalyzer.Analyze(strategy);
 
 			if (strategy == AnalysisStrategyKind.ONDEMAND_ORLEANS)

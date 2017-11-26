@@ -399,7 +399,6 @@ public class C
 }
 class Program
 {
-
     public static void Main()
     {
         C d = new D();
