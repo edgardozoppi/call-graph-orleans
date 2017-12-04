@@ -577,7 +577,9 @@ namespace OrleansClient.Analysis
 		public async Task<PropagationEffects> RemoveMethodAsync()
 		{
 			var calleesInfo = from callNode in this.methodEntity.PropGraph.CallNodes
-							  select this.methodEntity.PropGraph.GetInvocationInfo(callNode);
+							  let calleeInfo = this.methodEntity.PropGraph.GetInvocationInfo(callNode)
+							  select calleeInfo.Clone(calleeInfo.PossibleCallees);
+							  //select calleeInfo;
 
 			var propagagationEffecs = new PropagationEffects(calleesInfo, true);
 			await this.PopulatePropagationEffectsInfo(propagagationEffecs, PropagationKind.REMOVE_TYPES);
