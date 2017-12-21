@@ -42,15 +42,37 @@ namespace OrleansClient.Analysis
 				Document = document,
 				SyntaxTree = syntaxTree,
 				SyntaxTreeRoot = syntaxTreeRoot,
-                SemanticModel = semanticModel,
+				SemanticModel = semanticModel,
 				DeclaredMethods = visitor.DeclaredMethods
 			};
 
 			return result;
 		}
+
+		//public static async Task<DocumentInfo> CreateAsync(Document document, Compilation compilation)
+		//{
+		//	var cancellationTokenSource = new CancellationTokenSource();
+		//	var semanticModel = await document.GetSemanticModelAsync(cancellationTokenSource.Token);
+		//	var syntaxTree = semanticModel.SyntaxTree;
+		//	var syntaxTreeRoot = await syntaxTree.GetRootAsync(cancellationTokenSource.Token);
+
+		//	var visitor = new MethodFinder(semanticModel);
+		//	visitor.Visit(syntaxTreeRoot);
+
+		//	var result = new DocumentInfo()
+		//	{
+		//		Document = document,
+		//		SyntaxTree = syntaxTree,
+		//		SyntaxTreeRoot = syntaxTreeRoot,
+		//		SemanticModel = semanticModel,
+		//		DeclaredMethods = visitor.DeclaredMethods
+		//	};
+
+		//	return result;
+		//}
 	}
 
-    public abstract partial class BaseProjectCodeProvider : IProjectCodeProvider
+	public abstract partial class BaseProjectCodeProvider : IProjectCodeProvider
     {
 		protected string projectPath;
 		private Project project;
@@ -133,12 +155,12 @@ namespace OrleansClient.Analysis
 			return methodEntity;
         }
 
-		private async Task<DocumentInfo> GetDocumentInfoAsync(string documentPath)
+		private async Task<DocumentInfo> GetDocumentInfoAsync(string documentPath, bool createIfNotFound = true)
 		{
 			DocumentInfo documentInfo = null;
 			documentPath = Path.GetFullPath(documentPath);
 
-			if (!this.DocumentsInfo.TryGetValue(documentPath, out documentInfo))
+			if (!this.DocumentsInfo.TryGetValue(documentPath, out documentInfo) && createIfNotFound)
             {
 				var document = this.Project.Documents.SingleOrDefault(doc =>
 				{
@@ -453,13 +475,8 @@ namespace OrleansClient.Analysis
 
 		private void RemoveDocumentInfo(string documentPath)
 		{
-			DocumentInfo documentInfo;
 			documentPath = Path.GetFullPath(documentPath);
-
-			if (this.DocumentsInfo.TryGetValue(documentPath, out documentInfo))
-			{
-				this.DocumentsInfo.Remove(documentPath);
-			}
+			this.DocumentsInfo.Remove(documentPath);
 		}
 
 		private void RemoveMethodFromDocumentInfo(MethodDescriptor methodDescriptor)
@@ -495,7 +512,7 @@ namespace OrleansClient.Analysis
 
 				foreach (var documentPath in modifiedProjectDocuments)
 				{
-					var oldDocumentInfo = await this.GetDocumentInfoAsync(documentPath);
+					var oldDocumentInfo = await this.GetDocumentInfoAsync(documentPath, false);
 					this.useNewFieldsVersion = true;
 
 					this.RemoveDocumentInfo(documentPath);
