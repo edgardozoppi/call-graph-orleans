@@ -157,7 +157,7 @@ namespace OrleansClient.Analysis
                 if (calleeInfo is MethodCallInfo)
                 {
                     var methodCallInfo = calleeInfo as MethodCallInfo;
-					//methodCallInfo.ReceiverPossibleTypes = GetTypes(methodCallInfo.Receiver);;
+					//methodCallInfo.ReceiverPossibleTypes = GetTypes(methodCallInfo.Receiver);
 					methodCallInfo.PossibleCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method, codeProvider);
                 }
                 else if (calleeInfo is DelegateCallInfo)
@@ -581,9 +581,10 @@ namespace OrleansClient.Analysis
 							  select calleeInfo.Clone(calleeInfo.PossibleCallees);
 							  //select calleeInfo;
 
-			var propagagationEffecs = new PropagationEffects(calleesInfo, true);
-			await this.PopulatePropagationEffectsInfo(propagagationEffecs, PropagationKind.REMOVE_TYPES);
-			return propagagationEffecs;
+			var propagationEffects = new PropagationEffects(calleesInfo, true);
+			//await this.PopulatePropagationEffectsInfo(propagationEffects, PropagationKind.REMOVE_TYPES);
+			this.PopulateCallersInfo(propagationEffects.CallersInfo);
+			return propagationEffects;
 		}
 
 		//public async Task<PropagationEffects> UpdateMethodAsync(ISet<ReturnInfo> callersToUpdate)
