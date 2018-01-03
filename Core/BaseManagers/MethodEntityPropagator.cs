@@ -574,7 +574,7 @@ namespace OrleansClient.Analysis
 			return Task.FromResult(result.AsEnumerable());
 		}
 		
-		public async Task<PropagationEffects> RemoveMethodAsync()
+		public Task<PropagationEffects> RemoveMethodAsync()
 		{
 			var calleesInfo = from callNode in this.methodEntity.PropGraph.CallNodes
 							  let calleeInfo = this.methodEntity.PropGraph.GetInvocationInfo(callNode)
@@ -582,9 +582,12 @@ namespace OrleansClient.Analysis
 							  //select calleeInfo;
 
 			var propagationEffects = new PropagationEffects(calleesInfo, true);
+
 			//await this.PopulatePropagationEffectsInfo(propagationEffects, PropagationKind.REMOVE_TYPES);
+			//return propagationEffects;
+
 			this.PopulateCallersInfo(propagationEffects.CallersInfo);
-			return propagationEffects;
+			return Task.FromResult(propagationEffects);
 		}
 
 		//public async Task<PropagationEffects> UpdateMethodAsync(ISet<ReturnInfo> callersToUpdate)
@@ -594,9 +597,9 @@ namespace OrleansClient.Analysis
 		//	return propagagationEffecs;
 		//}
 
-		public Task UnregisterCallerAsync(CallContext callContex)
+		public Task UnregisterCallerAsync(CallContext callContext)
 		{
-			this.methodEntity.RemoveFromCallers(callContex);
+			this.methodEntity.RemoveFromCallers(callContext);
 			return Task.CompletedTask;
 		}
 
