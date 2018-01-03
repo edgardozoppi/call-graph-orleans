@@ -20,6 +20,7 @@ namespace OrleansClient.Analysis
 		protected IList<Project> newProjects;
 		protected ISet<TypeDescriptor> instantiatedTypes;
 		protected bool useNewFieldsVersion;
+		protected AnalysisRootKind? rootKind;
 		protected IEnumerable<MethodDescriptor> rootMethods;
 
 		protected SolutionManager()
@@ -90,6 +91,11 @@ namespace OrleansClient.Analysis
         {
 			if (this.rootMethods == null)
 			{
+				if (this.rootKind.HasValue)
+				{
+					rootKind = this.rootKind.Value;
+				}
+
 				var cancellationTokenSource = new CancellationTokenSource();
 				var result = new HashSet<MethodDescriptor>();
 
@@ -109,6 +115,7 @@ namespace OrleansClient.Analysis
 				}
 
 				this.rootMethods = result;
+				this.rootKind = rootKind;
 			}
 
 			return this.rootMethods;
