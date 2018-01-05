@@ -62,7 +62,8 @@ namespace Console
 				//@"C:\Users\Edgar\Source\Repos\ShareX\ShareX.sln", "OnDemandAsync", "0697738e ee540696 f6559ae2 c8dcc271 73136fbe f98307c6 6ecd7045 b3df7e49 95ff7c91 26513fa0 5c6da480 6a7e2b79 8adfe534 8b163231 265eeaad 58e9db8c"
 				//@"C:\Users\Edgar\Source\Repos\ShareX\ShareX.sln", "OnDemandAsync", "0697738e 0bf1f3f8 673324e6 4e721fc8 341784cc aaace76f 538acf30 cd76008e 1a2ea5bd 1c54b0de 5c8f91f5 6d637402 40eda16a c2546a28 0fd54925 6ad97797 b1a5ac3e 22fd8840 2b864b30 408f1d2d 1e0398cc a19e6afe"
 
-				@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "2726336b c10251d4 6a58560b 8cd31e30 68164194 411e6fac c59ed826 50d55b9b f267a787 1d029b36 30aa3bd4 596fca2b 5b4db073 22eb1a10"
+				//@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "2726336b c10251d4 6a58560b 8cd31e30 68164194 411e6fac c59ed826 50d55b9b f267a787 1d029b36 30aa3bd4 596fca2b 5b4db073 22eb1a10"
+				@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "c10251d4 6a58560b 8cd31e30 68164194 411e6fac c59ed826 50d55b9b f267a787 1d029b36 30aa3bd4 596fca2b 5b4db073 22eb1a10"
 			};
 
 			//// This is to compute solution statistics
@@ -111,7 +112,15 @@ namespace Console
 			if (initialCommit != null)
 			{
 				System.Console.WriteLine(solutionFolder);
-				RunAndPrintCommand(solutionFolder, "git", "checkout {0}", initialCommit);
+				RunAndPrintCommand(solutionFolder, "git", "checkout -f {0}", initialCommit);
+				//RunAndPrintCommand(solutionFolder, "git", "clean -ffdx");
+				//RunAndPrintCommand(solutionFolder, "git", "submodule update -f --init");
+
+				if (solutionFileName == "ILSpy.sln")
+				{
+					Directory.Delete(Path.Combine(solutionFolder, "ILSpy.AddIn"), true);
+				}
+
 				RunAndPrintCommand(solutionFolder, nugetPath, "restore \"{0}\"", solutionFileName);
 			}
 
@@ -122,7 +131,15 @@ namespace Console
 				var commit = commits[i];
 				var gitDiffResult = RunCommand(solutionFolder, "git", "diff --name-only {0}", commit);
 
-				RunAndPrintCommand(solutionFolder, "git", "checkout {0}", commit);
+				RunAndPrintCommand(solutionFolder, "git", "checkout -f {0}", commit);
+				//RunAndPrintCommand(solutionFolder, "git", "clean -ffdx");
+				//RunAndPrintCommand(solutionFolder, "git", "submodule update -f --init");
+
+				if (solutionFileName == "ILSpy.sln")
+				{
+					Directory.Delete(Path.Combine(solutionFolder, "ILSpy.AddIn"), true);
+				}
+
 				RunAndPrintCommand(solutionFolder, nugetPath, "restore \"{0}\"", solutionFileName);
 
 				var modifiedDocuments = gitDiffResult.Output

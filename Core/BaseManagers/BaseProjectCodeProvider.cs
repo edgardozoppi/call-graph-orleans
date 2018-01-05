@@ -27,34 +27,12 @@ namespace OrleansClient.Analysis
 		public SyntaxNode SyntaxTreeRoot { get; private set; }
 		public IDictionary<MethodDescriptor, MethodParserInfo> DeclaredMethods { get; private set; }
 
-		public static async Task<DocumentInfo> CreateAsync(Document document, Compilation compilation)
-		{
-			var cancellationTokenSource = new CancellationTokenSource();
-			var syntaxTree = await document.GetSyntaxTreeAsync(cancellationTokenSource.Token);
-			var syntaxTreeRoot = await syntaxTree.GetRootAsync(cancellationTokenSource.Token);
-			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-
-			var visitor = new MethodFinder(semanticModel);
-			visitor.Visit(syntaxTreeRoot);
-
-			var result = new DocumentInfo()
-			{
-				Document = document,
-				SyntaxTree = syntaxTree,
-				SyntaxTreeRoot = syntaxTreeRoot,
-				SemanticModel = semanticModel,
-				DeclaredMethods = visitor.DeclaredMethods
-			};
-
-			return result;
-		}
-
 		//public static async Task<DocumentInfo> CreateAsync(Document document, Compilation compilation)
 		//{
 		//	var cancellationTokenSource = new CancellationTokenSource();
-		//	var semanticModel = await document.GetSemanticModelAsync(cancellationTokenSource.Token);
-		//	var syntaxTree = semanticModel.SyntaxTree;
+		//	var syntaxTree = await document.GetSyntaxTreeAsync(cancellationTokenSource.Token);
 		//	var syntaxTreeRoot = await syntaxTree.GetRootAsync(cancellationTokenSource.Token);
+		//	var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
 		//	var visitor = new MethodFinder(semanticModel);
 		//	visitor.Visit(syntaxTreeRoot);
@@ -70,6 +48,28 @@ namespace OrleansClient.Analysis
 
 		//	return result;
 		//}
+
+		public static async Task<DocumentInfo> CreateAsync(Document document, Compilation compilation)
+		{
+			var cancellationTokenSource = new CancellationTokenSource();
+			var semanticModel = await document.GetSemanticModelAsync(cancellationTokenSource.Token);
+			var syntaxTree = semanticModel.SyntaxTree;
+			var syntaxTreeRoot = await syntaxTree.GetRootAsync(cancellationTokenSource.Token);
+
+			var visitor = new MethodFinder(semanticModel);
+			visitor.Visit(syntaxTreeRoot);
+
+			var result = new DocumentInfo()
+			{
+				Document = document,
+				SyntaxTree = syntaxTree,
+				SyntaxTreeRoot = syntaxTreeRoot,
+				SemanticModel = semanticModel,
+				DeclaredMethods = visitor.DeclaredMethods
+			};
+
+			return result;
+		}
 	}
 
 	public abstract partial class BaseProjectCodeProvider : IProjectCodeProvider
@@ -171,7 +171,11 @@ namespace OrleansClient.Analysis
 				if (document != null)
 				{
 					documentInfo = await DocumentInfo.CreateAsync(document, this.Compilation);
-					this.DocumentsInfo.Add(documentPath, documentInfo);
+
+					if (!this.DocumentsInfo.ContainsKey(documentPath))
+					{
+						this.DocumentsInfo.Add(documentPath, documentInfo);
+					}
 				}
             }
 
