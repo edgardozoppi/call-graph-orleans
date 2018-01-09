@@ -422,7 +422,7 @@ namespace OrleansClient.Analysis
 			var roslynMethod = methodParserInfo.MethodSymbol;
 
 			var propagationForCallers = new HashSet<ReturnInfo>();
-			if (roslynMethod.IsOverride)
+			if (roslynMethod.IsOverride && roslynMethod.OverriddenMethod != null)
 			{
 				var overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
 				var methodEntityWP = await this.GetMethodEntityAsync(overridenMethodDescriptor);
