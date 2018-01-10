@@ -15,6 +15,7 @@ namespace OrleansClient.Roslyn
 {
     public class AsyncProjectCodeProvider : BaseProjectCodeProvider
     {
+		private SemaphoreSlim methodEntitiesMutex;
 		private ConcurrentDictionary<MethodDescriptor, IMethodEntityWithPropagator> methodEntities;
 		private ConcurrentDictionary<MethodDescriptor, IMethodEntityWithPropagator> newMethodEntities;
 		//private IDictionary<MethodDescriptor, IMethodEntityWithPropagator> methodEntities;
@@ -23,6 +24,7 @@ namespace OrleansClient.Roslyn
 		private AsyncProjectCodeProvider(ISolutionManager solutionManager)
 			: base(solutionManager, new RtaManager())
         {
+			this.methodEntitiesMutex = new SemaphoreSlim(1, 1);
 			this.methodEntities = new ConcurrentDictionary<MethodDescriptor, IMethodEntityWithPropagator>();
 		}
 
@@ -56,20 +58,29 @@ namespace OrleansClient.Roslyn
 		{
 			IMethodEntityWithPropagator result;
 
-			if (!this.MethodEntities.TryGetValue(methodDescriptor, out result))
+			await this.methodEntitiesMutex.WaitAsync();
+
+			try
 			{
-				var methodEntity = await this.CreateMethodEntityAsync(methodDescriptor.BaseDescriptor) as MethodEntity;
-
-				if (methodDescriptor.IsAnonymousDescriptor)
+				if (!this.MethodEntities.TryGetValue(methodDescriptor, out result))
 				{
-					methodEntity = methodEntity.GetAnonymousMethodEntity((AnonymousMethodDescriptor)methodDescriptor);
-				}
+					var methodEntity = await this.CreateMethodEntityAsync(methodDescriptor.BaseDescriptor) as MethodEntity;
 
-				result = new MethodEntityWithPropagator(methodEntity, this);
-				//lock (this.methodEntities)
-				{
-					this.MethodEntities.TryAdd(methodDescriptor, result);
+					if (methodDescriptor.IsAnonymousDescriptor)
+					{
+						methodEntity = methodEntity.GetAnonymousMethodEntity((AnonymousMethodDescriptor)methodDescriptor);
+					}
+
+					result = new MethodEntityWithPropagator(methodEntity, this);
+					//lock (this.methodEntities)
+					{
+						this.MethodEntities.TryAdd(methodDescriptor, result);
+					}
 				}
+			}
+			finally
+			{
+				this.methodEntitiesMutex.Release();
 			}
 
 			return result;
