@@ -357,6 +357,7 @@ namespace OrleansClient
 
 		public static AnalysisCallNodeAdditionalInfo CreateAnalysisCallNodeAdditionalInfo(ISymbol symbol)
 		{
+			if (symbol == null) return null;
 			IMethodSymbol methodSymbol = null;
 
 			if (symbol is IMethodSymbol)

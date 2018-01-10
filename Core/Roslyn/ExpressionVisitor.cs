@@ -508,7 +508,8 @@ namespace OrleansClient.Roslyn
 					if (memberAccess.NameExpresion is Property)
 					{
 						var property = memberAccess.NameExpresion as Property;
-						if (property.RoslynMethod.MethodKind == MethodKind.PropertySet)
+						if (property.RoslynMethod != null &&
+							property.RoslynMethod.MethodKind == MethodKind.PropertySet)
 						{
 							// TODO : Process Property Setter
 							AnalyzePropertySetter(node, null, memberAccess.ReferenceExpresion, property, rhs);
@@ -1163,7 +1164,9 @@ namespace OrleansClient.Roslyn
 					{
 						// The property getter is analyzed here, but the setters are analyzed in the assigments (and converted to call set(value))
 						var property = (Property)nameExpresssion;
-						if (property.RoslynMethod.MethodKind == MethodKind.PropertyGet)
+
+						if (property.RoslynMethod != null &&
+							property.RoslynMethod.MethodKind == MethodKind.PropertyGet)
 						{
 							res = AnalyzePropertyGetter(node, receiverArg, referenceExpression, property);
 						}
