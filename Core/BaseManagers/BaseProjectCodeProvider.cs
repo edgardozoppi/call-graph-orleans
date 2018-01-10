@@ -171,11 +171,7 @@ namespace OrleansClient.Analysis
 				if (document != null)
 				{
 					documentInfo = await DocumentInfo.CreateAsync(document, this.Compilation);
-
-					if (!this.DocumentsInfo.ContainsKey(documentPath))
-					{
-						this.DocumentsInfo.Add(documentPath, documentInfo);
-					}
+					this.DocumentsInfo.Add(documentPath, documentInfo);
 				}
             }
 
