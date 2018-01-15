@@ -90,6 +90,8 @@ namespace Common
 		Task<MethodDescriptor> GetRandomMethodAsync();
 
 		Task<bool> IsReachableAsync(MethodDescriptor methodDescriptor);
+
+		Task RelocateAsync(string projectPath);
 	}
 
     public interface ISolutionManager

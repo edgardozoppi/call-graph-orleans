@@ -202,18 +202,18 @@ namespace OrleansClient.Analysis
 		public virtual async Task<IEnumerable<MethodModification>> GetModificationsAsync(IEnumerable<string> modifiedDocuments)
 		{
 			var tasks = new List<Task<IEnumerable<MethodModification>>>();
-			var existingProjectNames = this.Projects.Select(p => p.Name).ToList();
+			var existingProjects = this.Projects.ToDictionary(p => p.Name, p => p.FilePath);
 			var solution = await Utils.ReadSolutionAsync(this.solutionPath);
 
 			this.newProjects = Utils.FilterProjects(solution);
 			this.useNewFieldsVersion = true;
 
-			var newProjectsCount = newProjects.Count(p => !existingProjectNames.Contains(p.Name));
+			var newProjectsCount = newProjects.Count(p => !existingProjects.ContainsKey(p.Name));
 			var currentProjectNumber = 1;			
 
 			foreach (var project in newProjects)
 			{
-				var isNewProject = !existingProjectNames.Contains(project.Name);
+				var isNewProject = !existingProjects.ContainsKey(project.Name);
 
 				if (isNewProject)
 				{
@@ -223,6 +223,22 @@ namespace OrleansClient.Analysis
 				}
 
 				var provider = await this.GetProjectCodeProviderAsync(project.AssemblyName);
+
+				//// Handle relocation of projects
+				//if (!isNewProject)
+				//{
+				//	var oldProjectPath = existingProjects[project.Name];
+				//	var newProjectPath = project.FilePath;
+
+				//	oldProjectPath = System.IO.Path.GetFullPath(oldProjectPath);
+				//	newProjectPath = System.IO.Path.GetFullPath(newProjectPath);
+
+				//	if (!oldProjectPath.Equals(newProjectPath, StringComparison.InvariantCultureIgnoreCase))
+				//	{
+				//		await provider.RelocateAsync(project.FilePath);
+				//	}
+				//}
+
 				var task = provider.GetModificationsAsync(modifiedDocuments);
 				//await task;
 				tasks.Add(task);

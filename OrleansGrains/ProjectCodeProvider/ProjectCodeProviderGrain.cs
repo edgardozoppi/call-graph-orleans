@@ -140,7 +140,7 @@ namespace OrleansClient.Analysis
 			//await StatsHelper.RegisterMsg("ProjectGrain::SetProjectPath", this.GrainFactory);
 			await StatsHelper.RegisterMsg("ProjectGrain::SetProjectPath:" + fullPath, this.GrainFactory);
 
-			Logger.LogInfo(this.GetLogger(), "ProjectGrain", "SetProjectPath", "Enter:"+fullPath);
+			Logger.LogInfo(this.GetLogger(), "ProjectGrain", "SetProjectPath", "Enter:" + fullPath);
 
             this.State.ProjectPath = fullPath;            
             this.State.AssemblyName = null;
@@ -399,7 +399,7 @@ namespace OrleansClient.Analysis
         public async Task ForceDeactivationAsync()
         {
 			//await StatsHelper.RegisterMsg("ProjectGrain::ForceDeactivation", this.GrainFactory);
-			/// TODO: Change interface by OrleansCodeProvider but we need to fix the Dummy provider
+			//// TODO: Change interface by OrleansCodeProvider but we need to fix the Dummy provider
 
 			if (this.projectCodeProvider is OrleansProjectCodeProvider)
             {
@@ -435,6 +435,16 @@ namespace OrleansClient.Analysis
 			StatsHelper.RegisterMsg("ProjectGrain::GetCompatibleInstantiatedTypes", this.GrainFactory);
 
 			return this.projectCodeProvider.GetCompatibleInstantiatedTypesAsync(type);
+		}
+
+		public async Task RelocateAsync(string projectPath)
+		{
+			await StatsHelper.RegisterMsg("ProjectGrain::Relocate", this.GrainFactory);
+
+			this.State.ProjectPath = projectPath;
+
+			await this.WriteStateAsync();
+			await this.projectCodeProvider.RelocateAsync(projectPath);
 		}
 
 		public Task<MethodDescriptor> GetRandomMethodAsync()

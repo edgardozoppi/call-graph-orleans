@@ -108,5 +108,10 @@ namespace OrleansClient.Analysis
 			result.Add(type);
 			return Task.FromResult(result.AsEnumerable());
 		}
+
+		public Task RelocateAsync(string projectPath)
+		{
+			return Task.CompletedTask;
+		}
 	}
 }

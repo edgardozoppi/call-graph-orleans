@@ -418,11 +418,13 @@ namespace OrleansClient.Analysis
 			var roslynMethod = methodParserInfo.MethodSymbol;
 
 			var propagationForCallers = new HashSet<ReturnInfo>();
+
 			if (roslynMethod.IsOverride && roslynMethod.OverriddenMethod != null)
 			{
 				var overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
 				var methodEntityWP = await this.GetMethodEntityAsync(overridenMethodDescriptor);
 				var callersWithContext = await methodEntityWP.GetCallersAsync();
+
 				foreach(var callerContext in callersWithContext)
 				{
 					var returnInfo = new ReturnInfo(overridenMethodDescriptor,callerContext);
@@ -430,9 +432,9 @@ namespace OrleansClient.Analysis
 				}
 				
 			}
+
 			return new PropagationEffects(propagationForCallers);
 		}
-
 
 		public async Task ReplaceDocumentSourceAsync(string source, string documentPath)
 		{
@@ -486,6 +488,13 @@ namespace OrleansClient.Analysis
 				var methodFound = documentInfo.DeclaredMethods.Remove(methodDescriptor);
 				if (methodFound) break;
 			}
+		}
+
+		public Task RelocateAsync(string projectPath)
+		{
+			this.projectPath = projectPath;
+			// TODO: Maybe save the original path and do some other things to the documents?
+			return Task.CompletedTask;
 		}
 
 		public virtual async Task<IEnumerable<MethodModification>> GetModificationsAsync(IEnumerable<string> modifiedDocuments)

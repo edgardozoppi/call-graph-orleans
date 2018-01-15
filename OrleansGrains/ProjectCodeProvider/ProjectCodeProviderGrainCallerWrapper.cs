@@ -159,6 +159,12 @@ namespace OrleansClient.Analysis
 			return providerGrain.SetProjectFromTestAsync(testName);
 		}
 
+		public Task RelocateAsync(string projectPath)
+		{
+			this.SetRequestContext();
+			return providerGrain.RelocateAsync(projectPath);
+		}
+
 		public Task<MethodDescriptor> GetRandomMethodAsync()
 		{
 			//this.SetRequestContext();

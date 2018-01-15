@@ -169,5 +169,10 @@ namespace OrleansClient.Analysis
 		{
 			return codeProvider.IsReachableAsync(methodDescriptor);
 		}
+
+		public Task RelocateAsync(string projectPath)
+		{
+			return codeProvider.RelocateAsync(projectPath);
+		}
 	}
 }
