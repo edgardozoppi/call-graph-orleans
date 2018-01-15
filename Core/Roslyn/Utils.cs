@@ -20,6 +20,10 @@ namespace OrleansClient
 {
 	public static class Utils
 	{
+		private static Solution lastSolution;
+
+		public static bool UseCacheWhenReadingProjects = false;
+
 		public static MethodDescriptor CreateMethodDescriptor(IMethodSymbol method)
 		{
 			Contract.Assert(method != null);
@@ -388,6 +392,24 @@ namespace OrleansClient
 				throw new ArgumentException("Missing " + projectPath);
 			}
 
+			if (UseCacheWhenReadingProjects && lastSolution != null)
+			{
+				var fullProjectPath = Path.GetFullPath(projectPath);
+
+				var result = lastSolution.Projects.FirstOrDefault(p =>
+				{
+					var currentProjectPath = Path.GetFullPath(p.FilePath);
+
+					var found = currentProjectPath.Equals(fullProjectPath, StringComparison.InvariantCultureIgnoreCase);
+					return found;
+				});
+
+				if (result != null)
+				{
+					return result;
+				}
+			}
+
 			var props = new Dictionary<string, string>()
 			{
 				{ "CheckForSystemRuntimeDependency", "true" },
@@ -431,11 +453,16 @@ namespace OrleansClient
 			return project;
 		}
 
-		public static Task<Solution> ReadSolutionAsync(string solutionPath)
+		public static async Task<Solution> ReadSolutionAsync(string solutionPath)
 		{
 			if (!File.Exists(solutionPath))
 			{
 				throw new ArgumentException("Missing " + solutionPath);
+			}
+
+			if (UseCacheWhenReadingProjects)
+			{
+				lastSolution = null;
 			}
 
 			var props = new Dictionary<string, string>()
@@ -455,7 +482,14 @@ namespace OrleansClient
 			}
 
 			var ws = MSBuildWorkspace.Create(props);
-			return ws.OpenSolutionAsync(solutionPath);
+			var solution = await ws.OpenSolutionAsync(solutionPath);
+
+			if (UseCacheWhenReadingProjects)
+			{
+				lastSolution = solution;
+			}
+
+			return solution;
 		}
 
 		public static Solution ReadSolution(string path)
@@ -946,7 +980,6 @@ namespace OrleansClient
 			get { return count; }
 		}
 	}
-
 
 	public static class TypeHelper
 	{

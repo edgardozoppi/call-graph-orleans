@@ -17,9 +17,11 @@ namespace OrleansClient.Analysis
 		private IDictionary<AssemblyName, IProjectCodeProvider> projectProviders;
 		private IDictionary<AssemblyName, IProjectCodeProvider> newProjectProviders;
 
-		private AsyncSolutionManager() : base()
+		private AsyncSolutionManager()
 		{
 			this.projectProviders = new Dictionary<AssemblyName, IProjectCodeProvider>();
+
+			Utils.UseCacheWhenReadingProjects = true;
 		}
 
 		public static async Task<AsyncSolutionManager> CreateFromSolutionAsync(string solutionPath)
