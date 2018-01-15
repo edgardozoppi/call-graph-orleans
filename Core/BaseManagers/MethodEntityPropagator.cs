@@ -83,7 +83,7 @@ namespace OrleansClient.Analysis
         private async Task<PropagationEffects> InternalPropagateAsync(PropagationKind propKind)
         {
 			//Logger.LogS("MethodEntityProp", "PropagateAsync", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
-			Logger.Log("Propagating {0} to {1}", this.methodEntity.MethodDescriptor, propKind);
+			//Logger.Log("Propagating {0} to {1}", this.methodEntity.MethodDescriptor, propKind);
 			
 			// var codeProvider = await ProjectGrainWrapper.CreateProjectGrainWrapperAsync(this.methodEntity.MethodDescriptor);
 			PropagationEffects propagationEffects = null;

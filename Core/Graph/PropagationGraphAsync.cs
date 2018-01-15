@@ -118,7 +118,7 @@ namespace OrleansClient
             this.UpdateCount = 0;
             this.WorklistSize = workList.Count;
 
-            Logger.Log("Add Working Set size {0}", this.workList.Count);
+            //Logger.Log("Add Working Set size {0}", this.workList.Count);
             this.codeProvider = codeProvider;
 
             var calls = new HashSet<CallInfo>();
