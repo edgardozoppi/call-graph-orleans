@@ -68,7 +68,7 @@ namespace Console
 				//@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "2726336b c10251d4 6a58560b 8cd31e30 68164194 411e6fac c59ed826 50d55b9b f267a787 1d029b36 30aa3bd4 596fca2b 5b4db073 22eb1a10"
 				//@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "c10251d4 6a58560b 8cd31e30 68164194 411e6fac c59ed826 50d55b9b f267a787 1d029b36 30aa3bd4 596fca2b 5b4db073 22eb1a10"
 
-				// 100 commits
+				// 100 commits OK
 				//@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "3d1d452e 2663416f 2a6d359e ec8fc657 30528cee 907aa62c 1d92df77 22520841 6a8908aa d92ba271 1f79b77c 43a2c9d0 b6cd1f3c 23817924 421ad617 14815abd 00b01777 5b1a540d adb8a987 e6b889ac 6774b3c3 385048f3 7689e99e e9740022 4eaafc7e 12e3ac81 ab4b9492 054f6a11 0e118f09 9dec6c80 f55a9301 ce023313 d5366140 d1026c46 36d61db3 a6fc52a6 11bb3060 4a13491f c0e07679 267c69cc 0fade5cb 15b776fa 5150cdce bedff74b 20c450c0 dd485b97 dfe70d53 4eb5e826 7273fe58 b2ef367c 63666813 19c819cd 51a97862 fe1b9dce 5bbec7df d50695c2 94d1d76e 760e02a5 0366ba18 507f8455 4ac1c2d0 db24116b 85bab79e 7e52b622 4c5f3839 4fa22d6c 5e79cf22 8d2116de 0d318eef b558f0c0 5bedb80a 284ddfad 19800c3b 53b2a70a 7eb557bf f51a8b98 557c5a50 1ce8349d 840ec04f 88887b7c d8a2d41e a8cdfc3d fa2f8ec2 c590d282 f6c60a62 0524b4a3 b3590ec2 5530f7ec b254ff66 c0582cf3 fc8825d8 6702488a ed3d4aba e871f7c0 66dee6c6 6343ab7c d3904598 64bd447d d0f9b567 68164194"
 				@"C:\Users\Edgar\Source\Repos\ILSpy\ILSpy.sln", "OnDemandAsync", "dde96674 92e8deaf a813dddc 3a89500e 2d26c776 ae75c57e 40819d2b fc45d476 c0effc81 40aaabe4 e921239b ddb6f969 d87a9bf1 ae7dd7c4 a674b4cd ae6c42c9 de6c39c0 2a5546c4 f116d508 51e4577c 2786ce7a bc7032a8 24dfd88b 3d1d452e 2663416f 2a6d359e ec8fc657 30528cee 907aa62c 1d92df77 22520841 6a8908aa d92ba271 1f79b77c 43a2c9d0 b6cd1f3c 23817924 421ad617 14815abd 00b01777 5b1a540d adb8a987 e6b889ac 6774b3c3 385048f3 7689e99e e9740022 4eaafc7e 12e3ac81 ab4b9492 054f6a11 0e118f09 9dec6c80 f55a9301 ce023313 d5366140 d1026c46 36d61db3 a6fc52a6 11bb3060 4a13491f c0e07679 267c69cc 0fade5cb 15b776fa 5150cdce bedff74b 20c450c0 dd485b97 dfe70d53 4eb5e826 7273fe58 b2ef367c 63666813 19c819cd 51a97862 fe1b9dce 5bbec7df d50695c2 94d1d76e 760e02a5 0366ba18 507f8455 4ac1c2d0 db24116b 85bab79e 7e52b622 4c5f3839 4fa22d6c 5e79cf22 8d2116de 0d318eef b558f0c0 5bedb80a 284ddfad 19800c3b 53b2a70a 7eb557bf f51a8b98 557c5a50"
 
@@ -112,6 +112,43 @@ namespace Console
 			System.Console.WriteLine("Done!");
 			System.Console.ReadKey();
         }
+
+		private void RunAnalysis(string solutionPath, params string[] commits)
+		{
+			var timer = new Stopwatch();
+			var solutionFolder = Path.GetDirectoryName(solutionPath);
+			var solutionFileName = Path.GetFileName(solutionPath);
+			var nugetPath = Path.GetFullPath(Path.Combine(solutionFolder, @"..\.nuget\nuget"));
+
+			System.Console.WriteLine(solutionFolder);
+
+			CleanUpWorkingCopy(solutionFolder);
+
+			for (var i = 0; i < commits.Length; ++i)
+			{
+				var commit = commits[i];
+
+				System.Console.WriteLine(">> Analysis {0}: {1}", i, commit);
+
+				RunAndPrintCommand(solutionFolder, "git", "checkout -f {0}", commit);
+				//RunAndPrintCommand(solutionFolder, "git", "clean -ffdx");
+				RunAndPrintCommand(solutionFolder, "git", "submodule update -f --init");
+
+				if (solutionFileName == "ILSpy.sln")
+				{
+					var addinPath = Path.Combine(solutionFolder, "ILSpy.AddIn");
+
+					if (Directory.Exists(addinPath))
+					{
+						Directory.Delete(addinPath, true);
+					}
+				}
+
+				RunAndPrintCommand(solutionFolder, nugetPath, "restore \"{0}\"", solutionFileName);
+
+				this.RunAnalysis(solutionPath);
+			}
+		}
 
 		private void RunIncrementalAnalysis(string solutionPath, params string[] commits)
 		{
@@ -185,7 +222,7 @@ namespace Console
 				}
 
 				System.Console.WriteLine("Starting incremental analysis...");
-				System.Console.WriteLine("Modified documents: {0}", modifiedDocuments.Count());
+				System.Console.WriteLine("Modified documents: {0}", modifiedDocuments.Count);
 
 				timer.Restart();
 
