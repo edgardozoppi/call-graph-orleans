@@ -535,7 +535,6 @@ namespace OrleansClient.Analysis
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(caller);
 			var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(caller);
 
-
 			//PropagationEffects propagationEffects = null;
 			//var ready = true;
 			//
@@ -702,26 +701,29 @@ namespace OrleansClient.Analysis
 			var callersInfo = new List<ReturnInfo>();
 			var modifications = await this.solutionManager.GetModificationsAsync(modifiedDocuments.ToList());
 
-			var methodsRemoved = from m in modifications
-								 where m.ModificationKind == ModificationKind.MethodRemoved
-								 select m.MethodDescriptor;
+			var methodsRemoved = (from m in modifications
+								  where m.ModificationKind == ModificationKind.MethodRemoved
+								  select m.MethodDescriptor)
+								 .ToList();
 
-			var methodsUpdated = from m in modifications
-								 where m.ModificationKind == ModificationKind.MethodUpdated
-								 select m.MethodDescriptor;
+			var methodsUpdated = (from m in modifications
+								  where m.ModificationKind == ModificationKind.MethodUpdated
+								  select m.MethodDescriptor)
+								 .ToList();
 
-			var methodsAdded = from m in modifications
-							   where m.ModificationKind == ModificationKind.MethodAdded
-							   select m.MethodDescriptor;
+			var methodsAdded = (from m in modifications
+							    where m.ModificationKind == ModificationKind.MethodAdded
+							    select m.MethodDescriptor)
+							   .ToList();
 
 			// TODO: log modified methods
 			Logger.Log("Removed methods:\n{0}", string.Join("\n", methodsRemoved));
 			Logger.Log("Modified methods:\n{0}", string.Join("\n", methodsUpdated));
 			Logger.Log("Added methods:\n{0}", string.Join("\n", methodsAdded));
 
-			Console.WriteLine("Removed methods: {0}", methodsRemoved.Count());
-			Console.WriteLine("Modified methods: {0}", methodsUpdated.Count());
-			Console.WriteLine("Added methods: {0}", methodsAdded.Count());
+			Console.WriteLine("Removed methods: {0}", methodsRemoved.Count);
+			Console.WriteLine("Modified methods: {0}", methodsUpdated.Count);
+			Console.WriteLine("Added methods: {0}", methodsAdded.Count);
 
 			var methodsRemovedOrUpdated = methodsRemoved.Union(methodsUpdated);
 			var methodsAddedOrUpdated = methodsAdded.Union(methodsUpdated);
@@ -741,6 +743,44 @@ namespace OrleansClient.Analysis
 			await this.UnregisterCallerAsync(calleesInfo);
 			await this.solutionManager.ReloadAsync();
 
+			// ----------------------------------------------------
+			var overridenMethods = new HashSet<MethodDescriptor>();
+
+			// This is only for overrides
+			foreach (var method in methodsAdded)
+			{
+				// If the method is an override reanalyze callers of the *base* (overriden) method
+				// TODO: For the case of overload we need to detect the callers of all possible overloads for all "compatible" types
+				var codeProvider = await this.solutionManager.GetProjectCodeProviderAsync(method);
+				var overridenMethod = await codeProvider.GetOverridenMethodAsync(method);
+
+				if (overridenMethod != null)
+				{
+					overridenMethods.Add(overridenMethod);
+				}
+			}
+
+			// We treat overriden methods as updated
+			overridenMethods.ExceptWith(methodsAddedOrUpdated);
+			methodsRemovedOrUpdated = methodsRemovedOrUpdated.Union(overridenMethods);
+			methodsAddedOrUpdated = methodsAddedOrUpdated.Union(overridenMethods);
+			calleesInfo.Clear();
+
+			foreach (var method in overridenMethods)
+			{
+				var projectProvider = await this.solutionManager.GetProjectCodeProviderAsync(method);
+				var propagationEffects = await projectProvider.RemoveMethodAsync(method);
+
+				calleesInfo.AddRange(propagationEffects.CalleesInfo);
+				callersInfo.AddRange(propagationEffects.CallersInfo);
+
+				await this.PropagateEffectsAsync(propagationEffects, PropagationKind.REMOVE_TYPES);
+			}
+
+			await this.ProcessMessages();
+			await this.UnregisterCallerAsync(calleesInfo);
+			// ----------------------------------------------------
+
 			// Don't propagate from modified callers since their call nodes may no longer exist
 			callersInfo.RemoveAll(callerInfo => methodsRemovedOrUpdated.Contains(callerInfo.CallerContext.Caller));
 			await this.PropagateFromCallersAsync(callersInfo);
@@ -751,6 +791,7 @@ namespace OrleansClient.Analysis
 
 			await AnalyzeAsync(modifiedRoots);
 
+			/*
 			// This is only for overrides
 			foreach (var method in methodsAdded)
 			{
@@ -772,10 +813,13 @@ namespace OrleansClient.Analysis
 					// Don't propagate from modified callers since their call nodes may no longer exist
 					var unmodifiedCallers = propagationEffects.CallersInfo.Where(callerInfo => !methodsRemovedOrUpdated.Contains(callerInfo.CallerContext.Caller));
 
-					await this.PropagateFromCallersAsync(unmodifiedCallers, PropagationKind.REMOVE_TYPES);
+					//await this.PropagateFromCallersAsync(unmodifiedCallers, PropagationKind.REMOVE_TYPES);
+
+					await this.PropagateEffectsAsync(propagationEffects, PropagationKind.REMOVE_TYPES);
+					await this.ProcessMessages();
 
 					// 1: Propagate the information from the callers of the overriden method to the *new* method
-					await this.PropagateFromCallersAsync(unmodifiedCallers, PropagationKind.ADD_TYPES);
+					await this.PropagateFromCallersAsync(unmodifiedCallers);
 
 					// 2: In the overriden method we need to remove the callers that do not call this method any longer 
 					// [they are the callers that have the type of the subclass as possible type of the receiver of the invocation]
@@ -792,6 +836,7 @@ namespace OrleansClient.Analysis
 					}
 				}
 			}
+			*/
 		}
 
 		#endregion

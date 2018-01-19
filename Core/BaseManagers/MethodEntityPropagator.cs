@@ -66,9 +66,18 @@ namespace OrleansClient.Analysis
 		{
 			Contract.Requires(reWorkSet != null);
 
-			foreach(var node in reWorkSet) 
+			switch (propKind)
 			{
-				methodEntity.PropGraph.AddToWorkList(node);
+				case PropagationKind.ADD_TYPES:
+					methodEntity.PropGraph.AddToWorkList(reWorkSet);
+					break;
+
+				case PropagationKind.REMOVE_TYPES:
+					methodEntity.PropGraph.AddToDeletionWorkList(reWorkSet);
+					break;
+
+				default:
+					throw new Exception("Unsupported propagation kind");
 			}
 
 			return PropagateAsync(propKind);
@@ -95,7 +104,7 @@ namespace OrleansClient.Analysis
 					break;
 
 				case PropagationKind.REMOVE_TYPES:
-					propagationEffects = await this.methodEntity.PropGraph.PropagateDeletionOfNodesAsync(codeProvider);
+					propagationEffects = await this.methodEntity.PropGraph.PropagateDeletionAsync(codeProvider);
 					break;
 
 				default:
@@ -255,13 +264,13 @@ namespace OrleansClient.Analysis
             var effects = await InternalPropagateAsync(returnMessageInfo.PropagationKind);
             Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "End Propagation for {0} ", returnMessageInfo.Caller);
 
-            if (returnMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES)
-            {
-                var invoInfo = from callNode in this.methodEntity.PropGraph.CallNodes
-                               select this.methodEntity.PropGraph.GetInvocationInfo(callNode);
+            //if (returnMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES)
+            //{
+            //    var invoInfo = from callNode in this.methodEntity.PropGraph.CallNodes
+            //                   select this.methodEntity.PropGraph.GetInvocationInfo(callNode);
 
-                await this.PopulateCalleesInfo(invoInfo);
-            }
+            //    await this.PopulateCalleesInfo(invoInfo);
+            //}
 
             return effects;
         }

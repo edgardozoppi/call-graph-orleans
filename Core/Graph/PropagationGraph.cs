@@ -380,7 +380,7 @@ namespace OrleansClient
 			var ts = GetTypesMS(n);
 			int c = ts.Count;
 			var removed = ts.ExceptWith(src);
-			if (removed.Count() > 0)
+			if (removed.Count > 0)
 			{
 				this.AddToDeletionWorkList(n);
 				// It should be the 
@@ -450,6 +450,11 @@ namespace OrleansClient
 			return graph.GetNode(vIndex[n]);
 		}
 
+		public void AddToWorkList(IEnumerable<PropGraphNodeDescriptor> nodes)
+		{
+			workList.UnionWith(nodes);
+		}
+
 		public void AddToWorkList(PropGraphNodeDescriptor n)
 		{
 			workList.Add(n);
@@ -462,12 +467,24 @@ namespace OrleansClient
 			//workList = workList.Remove(n);
 		}
 
+		public void AddToDeletionWorkList(IEnumerable<PropGraphNodeDescriptor> nodes)
+		{
+			deletionWorkList.UnionWith(nodes);
+		}
+
 		public void AddToDeletionWorkList(PropGraphNodeDescriptor n)
 		{
 			deletionWorkList.Add(n);
+			//deletionWorkList = deletionWorkList.Add(n);
 		}
 
-        internal void SetCodeProvider(IProjectCodeProvider codeProvider)
+		public void RemoveFromDeletionWorkList(PropGraphNodeDescriptor n)
+		{
+			deletionWorkList.Remove(n);
+			//deletionWorkList = deletionWorkList.Remove(n);
+		}
+
+		internal void SetCodeProvider(IProjectCodeProvider codeProvider)
         {
             this.codeProvider = codeProvider;
         }
@@ -483,6 +500,7 @@ namespace OrleansClient
 			{
 				var analysisNode = workList.First();
 				this.RemoveFromWorkList(analysisNode);
+
 				if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
 				{
 					calls.Add(GetInvocationInfo(analysisNode));
@@ -494,7 +512,6 @@ namespace OrleansClient
 				}
 
 				var v = GetVertex(analysisNode);
-
 				var types = GetTypes(analysisNode);
 
 				foreach (var v1 in graph.GetTargets(v.Id))
@@ -509,11 +526,12 @@ namespace OrleansClient
 					DiffPropDelegates(GetDelegates(analysisNode), n1);
 				}
 			}
+
 			HasBeenPropagated = true;
 			return new PropagationEffects(calls, retModified);
 		}
 
-		internal PropagationEffects PropagateDeletionOfNodes()
+		internal PropagationEffects PropagateDeletion()
 		{
 			var calls = new HashSet<CallInfo>();
 			bool retModified = false;
@@ -528,17 +546,14 @@ namespace OrleansClient
 					calls.Add(GetInvocationInfo(n));
 					continue;
 				}
-
 				if (IsRetNode(n))
 				{
 					retModified = true;
 				}
-				//if (IsDelegateCallNode(n))
-				//{
-				//    calls.Add(GetCallNode(n));
-				//}
+
 				var v = GetVertex(n);
 				var types = GetDeletedTypes(n);
+
 				foreach (var v1 in graph.GetTargets(v.Id))
 				{
 					var n1 = GetAnalysisNode(v1);
@@ -556,9 +571,11 @@ namespace OrleansClient
 					// DiffPropDelegates(GetDelegates(n), n1);
 
 				}
+
 				var ts = GetTypesMS(n);
 				var removed = ts.ExceptWith(types);
 			}
+
 			return new PropagationEffects(calls, retModified);
 		}
 

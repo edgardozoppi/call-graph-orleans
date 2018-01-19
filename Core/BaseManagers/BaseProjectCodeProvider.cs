@@ -412,28 +412,36 @@ namespace OrleansClient.Analysis
             return propagationEffects;
 		}
 
-		public async Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
+		public async Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor)
 		{
-			var methodParserInfo = await this.FindMethodInProjectAsync(methodToAdd);
+			MethodDescriptor overridenMethodDescriptor = null;
+			var methodParserInfo = await this.FindMethodInProjectAsync(methodDescriptor);
 			var roslynMethod = methodParserInfo.MethodSymbol;
-
-			var propagationForCallers = new HashSet<ReturnInfo>();
 
 			if (roslynMethod.IsOverride && roslynMethod.OverriddenMethod != null)
 			{
-				var overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
-				var methodEntityWP = await this.GetMethodEntityAsync(overridenMethodDescriptor);
-				var callersWithContext = await methodEntityWP.GetCallersAsync();
-
-				foreach(var callerContext in callersWithContext)
-				{
-					var returnInfo = new ReturnInfo(overridenMethodDescriptor,callerContext);
-					propagationForCallers.Add(returnInfo);
-				}
-				
+				overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
 			}
 
-			return new PropagationEffects(propagationForCallers);
+			return overridenMethodDescriptor;
+		}
+
+		public async Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
+		{
+			PropagationEffects effects = null;
+			var overridenMethodDescriptor = await GetOverridenMethodAsync(methodToAdd);
+
+			if (overridenMethodDescriptor != null)
+			{
+				var methodEntityWP = await this.GetMethodEntityAsync(overridenMethodDescriptor);
+				effects = await methodEntityWP.RemoveMethodAsync();
+			}
+			else
+			{
+				effects = new PropagationEffects();
+			}
+
+			return effects;
 		}
 
 		public async Task ReplaceDocumentSourceAsync(string source, string documentPath)

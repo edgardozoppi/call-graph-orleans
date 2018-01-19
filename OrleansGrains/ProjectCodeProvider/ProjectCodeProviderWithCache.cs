@@ -140,6 +140,11 @@ namespace OrleansClient.Analysis
 			return codeProvider.ReloadAsync();
 		}
 
+		public Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor)
+		{
+			return codeProvider.GetOverridenMethodAsync(methodDescriptor);
+		}
+
 		public Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
 		{
 			return codeProvider.AddMethodAsync(methodToAdd);

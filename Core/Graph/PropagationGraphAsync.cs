@@ -128,6 +128,7 @@ namespace OrleansClient
             {
                 var analysisNode = workList.First();
                 this.RemoveFromWorkList(analysisNode);
+
                 if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
                 {
                     //this.UpdateCount++;
@@ -140,7 +141,6 @@ namespace OrleansClient
                 }
 
                 var v = GetVertex(analysisNode);
-
                 var types = GetTypes(analysisNode);
 
                 foreach (var v1 in graph.GetTargets(v.Id))
@@ -155,18 +155,19 @@ namespace OrleansClient
                     DiffPropDelegates(GetDelegates(analysisNode), n1);
                 }
             }
-            HasBeenPropagated = true;
+
+            this.HasBeenPropagated = true;
             return new PropagationEffects(calls, retModified, this.UpdateCount, this.WorklistSize);
         }
+
         internal void ResetUpdateCount()
         {
             this.UpdateCount = 0;
         }
 
-        internal async Task<PropagationEffects> PropagateDeletionOfNodesAsync(IProjectCodeProvider codeProvider)
+        internal Task<PropagationEffects> PropagateDeletionAsync(IProjectCodeProvider codeProvider)
         {
-			Logger.Log("Delete Working Set size {0}", this.workList.Count);
-
+			//Logger.Log("Delete Working Set size {0}", this.deletionWorkList.Count);
 			this.codeProvider = codeProvider;
 
             var calls = new HashSet<CallInfo>();
@@ -174,25 +175,22 @@ namespace OrleansClient
 
             while (deletionWorkList.Count > 0)
             {
-                var n = deletionWorkList.First();
-                deletionWorkList.Remove(n);
+                var analysisNode = deletionWorkList.First();
+                this.RemoveFromDeletionWorkList(analysisNode);
 
-                if (IsCallNode(n) || IsDelegateCallNode(n))
+                if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
                 {
-                    calls.Add(GetInvocationInfo(n));
+                    calls.Add(GetInvocationInfo(analysisNode));
                     continue;
                 }
-
-                if (IsRetNode(n))
+                if (IsRetNode(analysisNode))
                 {
                     retModified = true;
                 }
-                //if (IsDelegateCallNode(n))
-                //{
-                //    calls.Add(GetCallNode(n));
-                //}
-                var v = GetVertex(n);
-                var types = GetDeletedTypes(n);
+
+				var v = GetVertex(analysisNode);
+                var types = GetDeletedTypes(analysisNode);
+
                 foreach (var v1 in graph.GetTargets(v.Id))
                 {
                     var n1 = GetAnalysisNode(v1);
@@ -207,14 +205,14 @@ namespace OrleansClient
                         }
                     }
 
-                    // DiffPropDelegates(GetDelegates(n), n1);
+					// DiffPropDelegates(GetDelegates(analysisNode), n1);
+				}
 
-                }
-                var ts = GetTypesMS(n);
+				var ts = GetTypesMS(analysisNode);
                 var removed = ts.ExceptWith(types);
             }
 
-            return await Task.FromResult(new PropagationEffects(calls, retModified));
+            return Task.FromResult(new PropagationEffects(calls, retModified));
         }
 
         // DIEGO 

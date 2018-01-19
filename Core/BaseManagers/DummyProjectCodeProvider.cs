@@ -76,6 +76,11 @@ namespace OrleansClient.Analysis
 			return Task.FromResult(new PropagationEffects(new HashSet<CallInfo>(), false));
 		}
 
+		public Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor)
+		{
+			return Task.FromResult<MethodDescriptor>(null);
+		}
+
 		public Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
 		{
 			return Task.FromResult(new PropagationEffects(new HashSet<ReturnInfo>()));

@@ -423,6 +423,13 @@ namespace OrleansClient.Analysis
             this.DeactivateOnIdle();
         }
 
+		public Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor)
+		{
+			StatsHelper.RegisterMsg("ProjectGrain::GetOverridenMethod", this.GrainFactory);
+
+			return this.projectCodeProvider.GetOverridenMethodAsync(methodDescriptor);
+		}
+
 		public Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
 		{
 			StatsHelper.RegisterMsg("ProjectGrain::AddMethod", this.GrainFactory);

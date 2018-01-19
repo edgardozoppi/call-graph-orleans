@@ -92,6 +92,8 @@ namespace Common
 		Task<bool> IsReachableAsync(MethodDescriptor methodDescriptor);
 
 		Task RelocateAsync(string projectPath);
+
+		Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor);
 	}
 
     public interface ISolutionManager

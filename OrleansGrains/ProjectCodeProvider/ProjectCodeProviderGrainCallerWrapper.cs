@@ -27,6 +27,12 @@ namespace OrleansClient.Analysis
 			RequestContext.Set(StatsHelper.CALLER_ADDR_CONTEXT, StatsHelper.CreateMyIPAddrContext());
 		}
 
+		public Task<MethodDescriptor> GetOverridenMethodAsync(MethodDescriptor methodDescriptor)
+		{
+			this.SetRequestContext();
+			return providerGrain.GetOverridenMethodAsync(methodDescriptor);
+		}
+
 		public Task<PropagationEffects> AddMethodAsync(MethodDescriptor methodToAdd)
 		{
 			this.SetRequestContext();
