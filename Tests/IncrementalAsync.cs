@@ -31,5 +31,21 @@ namespace Tests
 		{
 			BasicTests.TestAddMethodSimpleCall(AnalysisStrategyKind.ONDEMAND_ASYNC);
 		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestUpdateMethodStarOnDemandAsync()
+		{
+			BasicTests.TestUpdateMethodStar(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestAddMethodOverrideOnDemandAsync()
+		{
+			BasicTests.TestAddMethodOverride(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
 	}
 }
