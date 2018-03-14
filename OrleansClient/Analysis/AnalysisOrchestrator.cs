@@ -281,6 +281,8 @@ namespace OrleansClient.Analysis
 					{
 						// Logger.LogWarning(GrainClient.Logger, "Orchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
 
+						Debug.WriteLine("\n[Remove from worklist] {0}", message);
+
 						if (message is CallerMessage)
 						{
 							var callerMessage = (CallerMessage)message;
@@ -419,6 +421,8 @@ namespace OrleansClient.Analysis
 
 			//Logger.LogWarning(GrainClient.Logger, "Orchestrator", "CreateAndSendCallMsg", "Enqueuing: {0}", callee);
 
+			Debug.WriteLine("\t[Add to worklist] {0}", callerMessage);
+
 			//await WaitQueue(QUEUE_THRESHOLD);
 			this.messageWorkList.Enqueue(callerMessage);
 			//this.messageWorkList.Add(callerMessage);
@@ -510,6 +514,8 @@ namespace OrleansClient.Analysis
 
 			var source = new MethodEntityDescriptor(returnInfo.Callee);
 			var calleeMessage = new CalleeMessage(source, returnMessageInfo);
+
+			Debug.WriteLine("\t[Add to worklist] {0}", calleeMessage);
 
 			//await WaitQueue(QUEUE_THRESHOLD);
 			this.messageWorkList.Enqueue(calleeMessage);

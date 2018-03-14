@@ -12,18 +12,20 @@ using Common;
 
 namespace OrleansClient.Analysis
 {
-    /// <summary>
-    /// This Classs plays the role of the MethodEntityProcessor but it is used by the OndemandAnalysisAsync
-    /// and OnDemandOrleans
-    /// This should replace the MethodEntityProcessor when we get rid of the MethodEntityProccesor
-    /// </summary>
-    internal class MethodEntityWithPropagator : IMethodEntityWithPropagator
-    {
-        private List<int> UpdateHistory = new List<int>();
-        private MethodEntity methodEntity;
-        private IProjectCodeProvider codeProvider;
-        //private Queue<PropagationEffects> propagationEffectsToSend;
-        //private Orleans.Runtime.Logger logger = GrainClient.Logger;
+	/// <summary>
+	/// This Classs plays the role of the MethodEntityProcessor but it is used by the OndemandAnalysisAsync
+	/// and OnDemandOrleans
+	/// This should replace the MethodEntityProcessor when we get rid of the MethodEntityProccesor
+	/// </summary>
+	internal class MethodEntityWithPropagator : IMethodEntityWithPropagator
+	{
+		private List<int> UpdateHistory = new List<int>();
+		private MethodEntity methodEntity;
+		private IProjectCodeProvider codeProvider;
+		private CallContext newCallContext;
+
+		//private Queue<PropagationEffects> propagationEffectsToSend;
+		//private Orleans.Runtime.Logger logger = GrainClient.Logger;
 
 		///// <summary>
 		///// This build a MethodEntityPropagator with a solution
@@ -49,18 +51,18 @@ namespace OrleansClient.Analysis
 		//	}            
 		//}
 
-        /// <summary>
-        /// Creates the Propagator using directly an entity and a provider
-        /// This can be used by the MethodEntityGrain
-        /// </summary>
-        /// <param name="methodEntity"></param>
-        /// <param name="provider"></param>
-        public MethodEntityWithPropagator(MethodEntity methodEntity, IProjectCodeProvider provider)
-        {
-            this.codeProvider = provider;
-            this.methodEntity = methodEntity;
+		/// <summary>
+		/// Creates the Propagator using directly an entity and a provider
+		/// This can be used by the MethodEntityGrain
+		/// </summary>
+		/// <param name="methodEntity"></param>
+		/// <param name="provider"></param>
+		public MethodEntityWithPropagator(MethodEntity methodEntity, IProjectCodeProvider provider)
+		{
+			this.codeProvider = provider;
+			this.methodEntity = methodEntity;
 			//this.propagationEffectsToSend = new Queue<PropagationEffects>();
-        }
+		}
 
 		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
 		{
@@ -83,17 +85,17 @@ namespace OrleansClient.Analysis
 			return PropagateAsync(propKind);
 		}
 
-        public Task<PropagationEffects> PropagateAsync(PropagationKind propKind)
-        {
-            this.methodEntity.PropGraph.ResetUpdateCount();
-            return InternalPropagateAsync(propKind);
-        }
+		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind)
+		{
+			this.methodEntity.PropGraph.ResetUpdateCount();
+			return InternalPropagateAsync(propKind);
+		}
 
-        private async Task<PropagationEffects> InternalPropagateAsync(PropagationKind propKind)
-        {
+		private async Task<PropagationEffects> InternalPropagateAsync(PropagationKind propKind)
+		{
 			//Logger.LogS("MethodEntityProp", "PropagateAsync", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
 			//Logger.Log("Propagating {0} to {1}", this.methodEntity.MethodDescriptor, propKind);
-			
+
 			// var codeProvider = await ProjectGrainWrapper.CreateProjectGrainWrapperAsync(this.methodEntity.MethodDescriptor);
 			PropagationEffects propagationEffects = null;
 
@@ -111,104 +113,127 @@ namespace OrleansClient.Analysis
 					throw new Exception("Unsupported propagation kind");
 			}
 
-            await this.PopulatePropagationEffectsInfo(propagationEffects, propKind);
+			await this.PopulatePropagationEffectsInfo(propagationEffects, propKind);
 
-            Logger.LogS("MethodEntityGrain", "PropagateAsync", "End Propagation for {0} ", this.methodEntity.MethodDescriptor);
-            //this.methodEntity.Save(@"C:\Temp\"+this.methodEntity.MethodDescriptor.MethodName + @".dot");
+			this.methodEntity.PropGraph.RemoveDeletedTypes();
 
-            //if (propagationEffects.CalleesInfo.Count > 100)
-            //{
-            //	int index = 0;
-            //	var count = propagationEffects.CalleesInfo.Count;
-            //	var callessInfo = propagationEffects.CalleesInfo.ToList();
-            //	propagationEffects.CalleesInfo = new HashSet<CallInfo>(callessInfo.GetRange(index, count > 100 ? 100 : count));
-            //	propagationEffects.MoreEffectsToFetch = true;
-            //
-            //	while (count > 100)
-            //	{
-            //		count -= 100;
-            //		index += 100;
-            //
-            //		var propEffect = new PropagationEffects(new HashSet<CallInfo>(callessInfo.GetRange(index, count > 100 ? 100 : count)), false);
-            //
-            //		if (count > 100)
-            //		{
-            //			propEffect.MoreEffectsToFetch = true;
-            //		}
-            //
-            //		this.propagationEffectsToSend.Enqueue(propEffect);                   
-            //	}
-            //}
-            //this.UpdateHistory.Add(this.methodEntity.PropGraph.UpdateCount);
-            return propagationEffects;
-        }
+			Logger.LogS("MethodEntityGrain", "PropagateAsync", "End Propagation for {0} ", this.methodEntity.MethodDescriptor);
+			//this.methodEntity.Save(@"C:\Temp\"+this.methodEntity.MethodDescriptor.MethodName + @".dot");
+
+			//if (propagationEffects.CalleesInfo.Count > 100)
+			//{
+			//	int index = 0;
+			//	var count = propagationEffects.CalleesInfo.Count;
+			//	var callessInfo = propagationEffects.CalleesInfo.ToList();
+			//	propagationEffects.CalleesInfo = new HashSet<CallInfo>(callessInfo.GetRange(index, count > 100 ? 100 : count));
+			//	propagationEffects.MoreEffectsToFetch = true;
+			//
+			//	while (count > 100)
+			//	{
+			//		count -= 100;
+			//		index += 100;
+			//
+			//		var propEffect = new PropagationEffects(new HashSet<CallInfo>(callessInfo.GetRange(index, count > 100 ? 100 : count)), false);
+			//
+			//		if (count > 100)
+			//		{
+			//			propEffect.MoreEffectsToFetch = true;
+			//		}
+			//
+			//		this.propagationEffectsToSend.Enqueue(propEffect);                   
+			//	}
+			//}
+			//this.UpdateHistory.Add(this.methodEntity.PropGraph.UpdateCount);
+			return propagationEffects;
+		}
 
 		private async Task PopulatePropagationEffectsInfo(PropagationEffects propagationEffects, PropagationKind propKind)
 		{
-            await this.PopulateCalleesInfo(propagationEffects.CalleesInfo);
+			await this.PopulateCalleesInfo(propagationEffects.CalleesInfo, propKind);
 
 			if (this.methodEntity.ReturnVariable != null || propKind == PropagationKind.REMOVE_TYPES)
 			{
-				this.PopulateCallersInfo(propagationEffects.CallersInfo);
+				if (!propagationEffects.ResultChanged && this.newCallContext != null)
+				{
+					propagationEffects.ResultChanged = true;
+				}
+
+				this.PopulateCallersInfo(propagationEffects.CallersInfo, propKind);
 			}
 		}
 
-        private async Task PopulateCalleesInfo(IEnumerable<CallInfo> calleesInfo)
-        {
-            foreach (var calleeInfo in calleesInfo)
-            {
-                //  Add instanciated types! 
-                // Diego: Ben. This may not work well in parallel... 
-                // We need a different way to update this info
-                //calleeInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
+		private async Task PopulateCalleesInfo(IEnumerable<CallInfo> calleesInfo, PropagationKind propKind)
+		{
+			foreach (var calleeInfo in calleesInfo)
+			{
+				//  Add instanciated types! 
+				// Diego: Ben. This may not work well in parallel... 
+				// We need a different way to update this info
+				//calleeInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
 
-                // TODO: This is because of the refactor
-                if (calleeInfo is MethodCallInfo)
-                {
-                    var methodCallInfo = calleeInfo as MethodCallInfo;
+				// TODO: This is because of the refactor
+				if (calleeInfo is MethodCallInfo)
+				{
+					var methodCallInfo = calleeInfo as MethodCallInfo;
 					//methodCallInfo.ReceiverPossibleTypes = GetTypes(methodCallInfo.Receiver);
 					methodCallInfo.PossibleCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method, codeProvider);
-                }
-                else if (calleeInfo is DelegateCallInfo)
-                {
-                    var delegateCalleeInfo = calleeInfo as DelegateCallInfo;
+				}
+				else if (calleeInfo is DelegateCallInfo)
+				{
+					var delegateCalleeInfo = calleeInfo as DelegateCallInfo;
 					//delegateCalleeInfo.ReceiverPossibleTypes = GetTypes(delegateCalleeInfo.Delegate);
 					delegateCalleeInfo.PossibleCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate, codeProvider);
-                }
+				}
 
 				calleeInfo.ArgumentsPossibleTypes.Clear();
 
 				for (int i = 0; i < calleeInfo.Arguments.Count; i++)
-                {
-                    var arg = calleeInfo.Arguments[i];
-                    var potentialTypes = GetTypes(arg);
-                    calleeInfo.ArgumentsPossibleTypes.Add(potentialTypes);
-                }
-            }
-        }
-
-		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo)
-		{
-			foreach (var callerContext in this.methodEntity.Callers)
-			{
-				var returnInfo = new ReturnInfo(this.methodEntity.MethodDescriptor, callerContext);
-				returnInfo.ResultPossibleTypes = GetTypes(this.methodEntity.ReturnVariable);
-				//returnInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
-
-				callersInfo.Add(returnInfo);
+				{
+					var arg = calleeInfo.Arguments[i];
+					var types = GetTypes(arg, propKind);
+					var potentialTypes = new HashSet<TypeDescriptor>(types);
+					calleeInfo.ArgumentsPossibleTypes.Add(potentialTypes);
+				}
 			}
 		}
 
-		public async Task<PropagationEffects> PropagateAsync(CallMessageInfo callMessageInfo)
-        {
-            this.methodEntity.PropGraph.ResetUpdateCount();
+		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, PropagationKind propKind)
+		{
+			if (this.newCallContext != null)
+			{
+				PopulateCallersInfo(callersInfo, this.newCallContext, propKind);
+				this.newCallContext = null;
+			}
+			else
+			{
+				foreach (var callerContext in this.methodEntity.Callers)
+				{
+					PopulateCallersInfo(callersInfo, callerContext, propKind);
+				}
+			}
+		}
 
-            Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "Propagation for {0} ", callMessageInfo.Callee);
+		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, CallContext callerContext, PropagationKind propKind)
+		{
+			var returnInfo = new ReturnInfo(this.methodEntity.MethodDescriptor, callerContext);
+			var types = GetTypes(this.methodEntity.ReturnVariable, propKind);
+
+			returnInfo.ResultPossibleTypes.UnionWith(types);
+			//returnInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
+
+			callersInfo.Add(returnInfo);
+		}
+
+		public async Task<PropagationEffects> PropagateAsync(CallMessageInfo callMessageInfo)
+		{
+			this.methodEntity.PropGraph.ResetUpdateCount();
+
+			Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "Propagation for {0} ", callMessageInfo.Callee);
 
 			if (!this.methodEntity.CanBeAnalized)
 			{
 				var calleesInfo = new HashSet<CallInfo>();
-                return new PropagationEffects(calleesInfo, false);
+				return new PropagationEffects(calleesInfo, false);
 			}
 
 			if (this.methodEntity.ThisRef != null && callMessageInfo.ReceiverType != null)
@@ -217,12 +242,12 @@ namespace OrleansClient.Analysis
 				await this.methodEntity.PropGraph.DiffPropAsync(receiverPossibleTypes, this.methodEntity.ThisRef, callMessageInfo.PropagationKind);
 			}
 
-		    for (var i = 0; i < this.methodEntity.ParameterNodes.Count; i++)
-            {
-                var parameterNode = this.methodEntity.ParameterNodes[i];
+			for (var i = 0; i < this.methodEntity.ParameterNodes.Count; i++)
+			{
+				var parameterNode = this.methodEntity.ParameterNodes[i];
 
-                if (parameterNode != null)
-                {
+				if (parameterNode != null)
+				{
 					//TODO: Hack. Remove later!
 					var argumentPossibleTypes = new HashSet<TypeDescriptor>();
 
@@ -233,62 +258,67 @@ namespace OrleansClient.Analysis
 					else
 					{
 						argumentPossibleTypes.Add(parameterNode.Type);
-                    }
+					}
 
-                    await this.methodEntity.PropGraph.DiffPropAsync(argumentPossibleTypes, parameterNode, callMessageInfo.PropagationKind);
-                }
-            }
+					await this.methodEntity.PropGraph.DiffPropAsync(argumentPossibleTypes, parameterNode, callMessageInfo.PropagationKind);
+				}
+			}
 
-            var context = new CallContext(callMessageInfo.Caller, callMessageInfo.LHS, callMessageInfo.CallNode);
-            this.methodEntity.AddToCallers(context);
+			var context = new CallContext(callMessageInfo.Caller, callMessageInfo.LHS, callMessageInfo.CallNode);
+			var isNewContext = this.methodEntity.AddToCallers(context);
 
-            var effects = await InternalPropagateAsync(callMessageInfo.PropagationKind);
-            Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "End Propagation for {0} ", callMessageInfo.Callee);
-            return effects;
-        }
+			if (isNewContext)
+			{
+				this.newCallContext = context;
+			}
 
-        public async Task<PropagationEffects> PropagateAsync(ReturnMessageInfo returnMessageInfo)
-        {
-            this.methodEntity.PropGraph.ResetUpdateCount();
+			var effects = await InternalPropagateAsync(callMessageInfo.PropagationKind);
+			Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "End Propagation for {0} ", callMessageInfo.Callee);
+			return effects;
+		}
 
-            Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "Propagation for {0} ", returnMessageInfo.Caller);
-            //PropGraph.Add(lhs, retValues);
+		public async Task<PropagationEffects> PropagateAsync(ReturnMessageInfo returnMessageInfo)
+		{
+			this.methodEntity.PropGraph.ResetUpdateCount();
 
-            if (returnMessageInfo.LHS != null)
-            {
+			Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "Propagation for {0} ", returnMessageInfo.Caller);
+			//PropGraph.Add(lhs, retValues);
+
+			if (returnMessageInfo.LHS != null)
+			{
 				var possibleTypes = returnMessageInfo.ResultPossibleTypes.ToList();
 				await this.methodEntity.PropGraph.DiffPropAsync(possibleTypes, returnMessageInfo.LHS, returnMessageInfo.PropagationKind);
-            }
+			}
 
-            /// We need to recompute possible calless 
-            var effects = await InternalPropagateAsync(returnMessageInfo.PropagationKind);
-            Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "End Propagation for {0} ", returnMessageInfo.Caller);
+			/// We need to recompute possible calless 
+			var effects = await InternalPropagateAsync(returnMessageInfo.PropagationKind);
+			Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "End Propagation for {0} ", returnMessageInfo.Caller);
 
-            //if (returnMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES)
-            //{
-            //    var invoInfo = from callNode in this.methodEntity.PropGraph.CallNodes
-            //                   select this.methodEntity.PropGraph.GetInvocationInfo(callNode);
+			//if (returnMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES)
+			//{
+			//    var invoInfo = from callNode in this.methodEntity.PropGraph.CallNodes
+			//                   select this.methodEntity.PropGraph.GetInvocationInfo(callNode);
 
-            //    await this.PopulateCalleesInfo(invoInfo);
-            //}
+			//    await this.PopulateCalleesInfo(invoInfo);
+			//}
 
-            return effects;
-        }
+			return effects;
+		}
 
-        public async Task<ISet<MethodDescriptor>> GetCalleesAsync(int invocationPosition)
-        {
-            var invocationNode = this.GetCallSiteByOrdinal(invocationPosition);
-            ISet<MethodDescriptor> result;
-            var calleesForNode = new HashSet<MethodDescriptor>();
-            var invExp = methodEntity.PropGraph.GetInvocationInfo(invocationNode);
-            Contract.Assert(invExp != null);
-            Contract.Assert(codeProvider != null);
-            var calleeResult = await methodEntity.PropGraph.ComputeCalleesForNodeAsync(invExp, codeProvider);
-            calleesForNode.UnionWith(calleeResult);
-            result = calleesForNode;
-            return result;
-            // return await CallGraphQueryInterface.GetCalleesAsync(methodEntity, invocationNode, this.codeProvider);
-        }
+		public async Task<ISet<MethodDescriptor>> GetCalleesAsync(int invocationPosition)
+		{
+			var invocationNode = this.GetCallSiteByOrdinal(invocationPosition);
+			ISet<MethodDescriptor> result;
+			var calleesForNode = new HashSet<MethodDescriptor>();
+			var invExp = methodEntity.PropGraph.GetInvocationInfo(invocationNode);
+			Contract.Assert(invExp != null);
+			Contract.Assert(codeProvider != null);
+			var calleeResult = await methodEntity.PropGraph.ComputeCalleesForNodeAsync(invExp, codeProvider);
+			calleesForNode.UnionWith(calleeResult);
+			result = calleesForNode;
+			return result;
+			// return await CallGraphQueryInterface.GetCalleesAsync(methodEntity, invocationNode, this.codeProvider);
+		}
 
 		internal AnalysisCallNode GetCallSiteByOrdinal(int invocationPosition)
 		{
@@ -304,14 +334,14 @@ namespace OrleansClient.Analysis
 			//return null;
 		}
 
-        public Task<int> GetInvocationCountAsync()
-        {
-            return Task.FromResult(methodEntity.PropGraph.CallNodes.Count());
-        }
+		public Task<int> GetInvocationCountAsync()
+		{
+			return Task.FromResult(methodEntity.PropGraph.CallNodes.Count());
+		}
 
-        private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForMethodCallAsync(PropGraphNodeDescriptor receiver, MethodDescriptor method, IProjectCodeProvider codeProvider)
-        {
-            var possibleCallees = new HashSet<ResolvedCallee>();
+		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForMethodCallAsync(PropGraphNodeDescriptor receiver, MethodDescriptor method, IProjectCodeProvider codeProvider)
+		{
+			var possibleCallees = new HashSet<ResolvedCallee>();
 
 			// TODO: This is not good: one reason is that loads like b = this.f are not working
 			// in a method m after call r.m() because only the value of r is passed and not all its structure (fields)
@@ -325,11 +355,11 @@ namespace OrleansClient.Analysis
 				var resolvedCallee = new ResolvedCallee(method);
 
 				possibleCallees.Add(resolvedCallee);
-            }
+			}
 			else if (!method.IsVirtual)
 			{
 				// Non-virtual method call
-				var receiverPossibleTypes = this.GetTypes(receiver);
+				var receiverPossibleTypes = this.GetAllTypes(receiver);
 
 				if (receiverPossibleTypes.Count > 0)
 				{
@@ -342,7 +372,7 @@ namespace OrleansClient.Analysis
 				}
 			}
 			else
-            {
+			{
 				// Instance method call
 
 				//// I need to compute all the callees
@@ -367,68 +397,68 @@ namespace OrleansClient.Analysis
 				//	}
 				//}
 
-				var receiverPossibleTypes = this.GetTypes(receiver);
+				var receiverPossibleTypes = this.GetAllTypes(receiver);
 
 				if (receiverPossibleTypes.Count > 0)
-                {
-                    foreach (var receiverType in receiverPossibleTypes)
-                    {
-                        // Given a method m and T find the most accurate implementation wrt to T
-                        // it can be T.m or the first super class implementing m
-                        var methodDescriptor = await codeProvider.FindMethodImplementationAsync(method, receiverType);
+				{
+					foreach (var receiverType in receiverPossibleTypes)
+					{
+						// Given a method m and T find the most accurate implementation wrt to T
+						// it can be T.m or the first super class implementing m
+						var methodDescriptor = await codeProvider.FindMethodImplementationAsync(method, receiverType);
 						var resolvedCallee = new ResolvedCallee(receiverType, methodDescriptor);
 
-                        possibleCallees.Add(resolvedCallee);
-                    }
-                }
-                //else
-                //{
-                //    // We don't have any possibleType for the receiver,
-                //    // so we just use the receiver's declared type to
-                //    // identify the calle method implementation
-                //    possibleCallees.Add(methodCallInfo.Method);
-                //}
-            }
+						possibleCallees.Add(resolvedCallee);
+					}
+				}
+				//else
+				//{
+				//    // We don't have any possibleType for the receiver,
+				//    // so we just use the receiver's declared type to
+				//    // identify the calle method implementation
+				//    possibleCallees.Add(methodCallInfo.Method);
+				//}
+			}
 
-            return possibleCallees;
-        }
+			return possibleCallees;
+		}
 
-        private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForDelegateCallAsync(DelegateVariableNode @delegate, IProjectCodeProvider codeProvider)
-        {
-            var possibleCallees = new HashSet<ResolvedCallee>();
-            var possibleDelegateMethods = this.GetPossibleMethodsForDelegate(@delegate);
+		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForDelegateCallAsync(DelegateVariableNode @delegate, IProjectCodeProvider codeProvider)
+		{
+			var possibleCallees = new HashSet<ResolvedCallee>();
+			var possibleDelegateMethods = this.GetPossibleMethodsForDelegate(@delegate);
 
-            foreach (var method in possibleDelegateMethods)
-            {
-                if (method.IsStatic)
-                {
+			foreach (var method in possibleDelegateMethods)
+			{
+				if (method.IsStatic)
+				{
 					// Static method call
 					var resolvedCallee = new ResolvedCallee(method);
 
 					possibleCallees.Add(resolvedCallee);
 				}
-                else
-                {
-                    // Instance method call
-					var receiverPossibleTypes = this.GetTypes(@delegate);
+				else
+				{
+					// Instance method call
+					var receiverPossibleTypes = this.GetAllTypes(@delegate);
 
 					if (receiverPossibleTypes.Count > 0)
-                    {
-                        foreach (var receiverType in receiverPossibleTypes)
-                        {
-                            //var aMethod = delegateInstance.FindMethodImplementation(t);
-                            // Diego: Should I use : codeProvider.FindImplementation(delegateInstance, t);
-                            var callee = await codeProvider.FindMethodImplementationAsync(method, receiverType);
+					{
+						foreach (var receiverType in receiverPossibleTypes)
+						{
+							//var aMethod = delegateInstance.FindMethodImplementation(t);
+							// Diego: Should I use : codeProvider.FindImplementation(delegateInstance, t);
+							var callee = await codeProvider.FindMethodImplementationAsync(method, receiverType);
 							var resolvedCallee = new ResolvedCallee(receiverType, callee);
 
 							possibleCallees.Add(resolvedCallee);
-                        }
-                    }
-                    else
-                    {
+						}
+					}
+					else
+					{
 						// We don't have any possibleType for the receiver,
 						// so we just use the receiver's declared type to
-						// identify the calle method implementation
+						// identify the callee method implementation
 
 						// if Count is 0, it is a delegate that do not came form an instance variable
 						var receiverType = @delegate.Type;
@@ -436,76 +466,89 @@ namespace OrleansClient.Analysis
 
 						possibleCallees.Add(resolvedCallee);
 					}
-                }
-            }
+				}
+			}
 
-            return possibleCallees;
-        }
+			return possibleCallees;
+		}
 
-        private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor analysisNode)
-        {
-            if (analysisNode != null)
-            {
-                return this.methodEntity.PropGraph.GetTypes(analysisNode);
-            }
-            else
-            {
-                return new HashSet<TypeDescriptor>();
-            }
-        }
+		private ISet<TypeDescriptor> GetAllTypes(PropGraphNodeDescriptor node)
+		{
+			var result = new HashSet<TypeDescriptor>();
+			var types = GetTypes(node);
+			var deletedTypes = GetDeletedTypes(node);
 
-        private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor node, PropagationKind prop)
-        {
-            switch (prop)
-            {
-                case PropagationKind.ADD_TYPES:
-                    return GetTypes(node);
-                case PropagationKind.REMOVE_TYPES:
-                    return GetDeletedTypes(node);
-                default:
-                    return GetTypes(node);
-            }
-        }
+			result.UnionWith(types);
+			result.UnionWith(deletedTypes);
 
-        internal ISet<TypeDescriptor> GetDeletedTypes(PropGraphNodeDescriptor node)
-        {
-            if (node != null)
-            {
-                return this.methodEntity.PropGraph.GetDeletedTypes(node);
-            }
-            else
-            {
-                return new HashSet<TypeDescriptor>();
-            }
-        }
+			return result;
+		}
 
-        internal ISet<MethodDescriptor> GetPossibleMethodsForDelegate(DelegateVariableNode node)
-        {
-            return this.methodEntity.PropGraph.GetDelegates(node);
-        }
+		private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor node, PropagationKind prop)
+		{
+			switch (prop)
+			{
+				case PropagationKind.ADD_TYPES:
+					return GetTypes(node);
+				case PropagationKind.REMOVE_TYPES:
+					return GetDeletedTypes(node);
+				default:
+					var msg = string.Format("Unsupported propagation kind: {0}", prop);
+					throw new Exception(msg);
+			}
+		}
 
-        public Task<IEntity> GetMethodEntityAsync()
-        {
-            // Contract.Assert(this.methodEntity != null);
-            return Task.FromResult<IEntity>(this.methodEntity);
-        }
+		private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor node)
+		{
+			if (node != null)
+			{
+				return this.methodEntity.PropGraph.GetTypes(node);
+			}
+			else
+			{
+				return new HashSet<TypeDescriptor>();
+			}
+		}
 
-        public async Task<ISet<MethodDescriptor>> GetCalleesAsync()
-        {
+		private ISet<TypeDescriptor> GetDeletedTypes(PropGraphNodeDescriptor node)
+		{
+			if (node != null)
+			{
+				return this.methodEntity.PropGraph.GetDeletedTypes(node);
+			}
+			else
+			{
+				return new HashSet<TypeDescriptor>();
+			}
+		}
+
+		internal ISet<MethodDescriptor> GetPossibleMethodsForDelegate(DelegateVariableNode node)
+		{
+			return this.methodEntity.PropGraph.GetDelegates(node);
+		}
+
+		public Task<IEntity> GetMethodEntityAsync()
+		{
+			// Contract.Assert(this.methodEntity != null);
+			return Task.FromResult<IEntity>(this.methodEntity);
+		}
+
+		public async Task<ISet<MethodDescriptor>> GetCalleesAsync()
+		{
 			var result = new HashSet<MethodDescriptor>();
 
 			foreach (var callNode in methodEntity.PropGraph.CallNodes)
 			{
 				var callees = await GetCalleesAsync(callNode);
-                result.UnionWith(callees);
+				result.UnionWith(callees);
 			}
 
 			return result;
-            // return CallGraphQueryInterface.GetCalleesAsync(this.methodEntity, codeProvider);
-        }
+			// return CallGraphQueryInterface.GetCalleesAsync(this.methodEntity, codeProvider);
+		}
 
-        public async Task<IDictionary<AnalysisCallNode, ISet<MethodDescriptor>>> GetCalleesInfoAsync()
-        {
+		public async Task<IDictionary<AnalysisCallNode, ISet<MethodDescriptor>>> GetCalleesInfoAsync()
+		{
 			var calleesPerEntity = new Dictionary<AnalysisCallNode, ISet<MethodDescriptor>>();
 
 			foreach (var calleeNode in this.methodEntity.PropGraph.CallNodes)
@@ -514,29 +557,29 @@ namespace OrleansClient.Analysis
 			}
 
 			return calleesPerEntity;
-            // return CallGraphQueryInterface.GetCalleesInfo(this.methodEntity, this.codeProvider);
-        }
+			// return CallGraphQueryInterface.GetCalleesInfo(this.methodEntity, this.codeProvider);
+		}
 
 		private async Task<ISet<MethodDescriptor>> GetCalleesAsync(AnalysisCallNode node)
-        {
+		{
 			var result = new HashSet<MethodDescriptor>();
-            var invExp = methodEntity.PropGraph.GetInvocationInfo(node);
+			var invExp = methodEntity.PropGraph.GetInvocationInfo(node);
 
-            var calleeResult = await methodEntity.PropGraph.ComputeCalleesForNodeAsync(invExp, codeProvider);
+			var calleeResult = await methodEntity.PropGraph.ComputeCalleesForNodeAsync(invExp, codeProvider);
 
-            result.UnionWith(calleeResult);
-            return result;
-        }
+			result.UnionWith(calleeResult);
+			return result;
+		}
 
-        public Task<bool> IsInitializedAsync()
-        {
-            return Task.FromResult(this.methodEntity != null);
-        }
+		public Task<bool> IsInitializedAsync()
+		{
+			return Task.FromResult(this.methodEntity != null);
+		}
 
-        public Task<IEnumerable<CallContext>> GetCallersAsync()
-        {
-            return Task.FromResult(this.methodEntity.Callers.AsEnumerable());
-        }
+		public Task<IEnumerable<CallContext>> GetCallersAsync()
+		{
+			return Task.FromResult(this.methodEntity.Callers.AsEnumerable());
+		}
 
 		public Task<IEnumerable<SymbolReference>> GetCallersDeclarationInfoAsync()
 		{
@@ -550,9 +593,9 @@ namespace OrleansClient.Analysis
 		}
 
 		public Task<IEnumerable<TypeDescriptor>> GetInstantiatedTypesAsync()
-        {
-            return Task.FromResult(this.methodEntity.InstantiatedTypes.AsEnumerable());
-        }
+		{
+			return Task.FromResult(this.methodEntity.InstantiatedTypes.AsEnumerable());
+		}
 
 		public Task<SymbolReference> GetDeclarationInfoAsync()
 		{
@@ -570,7 +613,7 @@ namespace OrleansClient.Analysis
 				result.Add(invocationInfo);
 			}
 
-			foreach(var anonymousEntity in this.methodEntity.GetAnonymousMethodEntities())
+			foreach (var anonymousEntity in this.methodEntity.GetAnonymousMethodEntities())
 			{
 				foreach (var callNode in anonymousEntity.PropGraph.CallNodes)
 				{
@@ -582,20 +625,22 @@ namespace OrleansClient.Analysis
 
 			return Task.FromResult(result.AsEnumerable());
 		}
-		
+
 		public Task<PropagationEffects> RemoveMethodAsync()
 		{
 			var calleesInfo = from callNode in this.methodEntity.PropGraph.CallNodes
 							  let calleeInfo = this.methodEntity.PropGraph.GetInvocationInfo(callNode)
 							  select calleeInfo.Clone(calleeInfo.PossibleCallees);
-							  //select calleeInfo;
+			//select calleeInfo;
 
-			var propagationEffects = new PropagationEffects(calleesInfo, true);
+			var propagationEffects = new PropagationEffects(calleesInfo, true, PropagationKind.REMOVE_TYPES);
 
-			//await this.PopulatePropagationEffectsInfo(propagationEffects, PropagationKind.REMOVE_TYPES);
+			//// The use of ADD_TYPES here is not an error!
+			//await this.PopulatePropagationEffectsInfo(propagationEffects, PropagationKind.ADD_TYPES);
 			//return propagationEffects;
 
-			this.PopulateCallersInfo(propagationEffects.CallersInfo);
+			// The use of ADD_TYPES here is not an error!
+			this.PopulateCallersInfo(propagationEffects.CallersInfo, PropagationKind.ADD_TYPES);
 			return Task.FromResult(propagationEffects);
 		}
 
@@ -616,8 +661,8 @@ namespace OrleansClient.Analysis
 		{
 			foreach (var parameterNode in this.methodEntity.ParameterNodes)
 			{
-                this.methodEntity.PropGraph.Add(parameterNode, parameterNode.Type);
-            }
+				this.methodEntity.PropGraph.Add(parameterNode, parameterNode.Type);
+			}
 
 			if (this.methodEntity.ThisRef != null)
 			{
@@ -633,7 +678,7 @@ namespace OrleansClient.Analysis
 			var unknownCallees = new HashSet<MethodDescriptor>();
 
 			var result = methodEntity.PropGraph.FixUnknownCalleesAsync(codeProvider);
-            return result;
+			return result;
 		}
 
 		//public Task UnregisterCalleeAsync(CallContext callContext)

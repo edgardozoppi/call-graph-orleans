@@ -7,16 +7,17 @@ namespace Common
 	[Serializable]
 	public class PropagationEffects
 	{
-		public PropagationEffects(IEnumerable<CallInfo> calleesInfo, bool resultChanged, int updates = 0, int worklistInitialSize = 0)
+		public PropagationEffects(IEnumerable<CallInfo> calleesInfo, bool resultChanged, PropagationKind kind = PropagationKind.ADD_TYPES, int updates = 0, int worklistInitialSize = 0)
 		{
+            this.CallersInfo = new HashSet<ReturnInfo>();
 			this.CalleesInfo = new HashSet<CallInfo>(calleesInfo);
 			this.ResultChanged = resultChanged;
-            this.CallersInfo = new HashSet<ReturnInfo>();
+			this.Kind = kind;
             this.NumberOfUpdates = updates;
             this.WorkListInitialSize = worklistInitialSize;
-        //    this.MoreEffectsToFetch = false;
-        //    this.MethodEntityReady = true;
-        }
+			//this.MoreEffectsToFetch = false;
+			//this.MethodEntityReady = true;
+		}
 
 		public PropagationEffects(IEnumerable<ReturnInfo> callersInfo)
 		{

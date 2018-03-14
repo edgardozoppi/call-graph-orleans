@@ -211,18 +211,24 @@ namespace OrleansClient.Analysis
         //    return new MethodEntityProcessor(this, dispatcher, true);
         //}
 
-        public void AddToCallers(CallContext context)
+        public bool AddToCallers(CallContext context)
         {
-			int count = callers.Count;
+			var newContext = false;
+			var count = callers.Count;
             //callers = callers.Add(context);
             callers.Add(context);
-			if(callers.Count>count)
+
+			if (callers.Count > count)
 			{
+				newContext = true;
+
 				if (this.ReturnVariable != null)
 				{
 					this.propGraph.AddToWorkList(this.ReturnVariable);
 				}
 			}
+
+			return newContext;
         }
 
         /// <summary>

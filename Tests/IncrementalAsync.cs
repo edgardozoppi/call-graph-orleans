@@ -47,5 +47,29 @@ namespace Tests
 		{
 			BasicTests.TestAddMethodOverride(AnalysisStrategyKind.ONDEMAND_ASYNC);
 		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestSoundness1OnDemandAsync()
+		{
+			BasicTests.TestSoundness1(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestSoundness2OnDemandAsync()
+		{
+			BasicTests.TestSoundness2(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestSoundness3OnDemandAsync()
+		{
+			BasicTests.TestSoundness3(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
 	}
 }

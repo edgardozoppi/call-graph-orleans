@@ -946,12 +946,13 @@ namespace OrleansClient
 					multiset.Remove(e);
 				}
 				else
+				{
 					multiset[e] = c - 1;
+				}
 				count--;
 			}
 			return true;
 		}
-
 
 		public ISet<T> ExceptWith(IEnumerable<T> set)
 		{
@@ -969,11 +970,11 @@ namespace OrleansClient
 		}
 		public ISet<T> AsSet()
 		{
-			if (internalSet.Count > this.Count)
-			{
-				return new HashSet<T>(multiset.Keys);
-			}
-			return internalSet;
+			//if (internalSet.Count > this.Count)
+			//{
+			//	return new HashSet<T>(multiset.Keys);
+			//}
+			return new HashSet<T>(internalSet);
 		}
 		public int Count
 		{

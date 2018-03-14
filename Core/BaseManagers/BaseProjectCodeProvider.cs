@@ -416,11 +416,15 @@ namespace OrleansClient.Analysis
 		{
 			MethodDescriptor overridenMethodDescriptor = null;
 			var methodParserInfo = await this.FindMethodInProjectAsync(methodDescriptor);
-			var roslynMethod = methodParserInfo.MethodSymbol;
 
-			if (roslynMethod.IsOverride && roslynMethod.OverriddenMethod != null)
+			if (methodParserInfo != null)
 			{
-				overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
+				var roslynMethod = methodParserInfo.MethodSymbol;
+
+				if (roslynMethod.IsOverride && roslynMethod.OverriddenMethod != null)
+				{
+					overridenMethodDescriptor = Utils.CreateMethodDescriptor(roslynMethod.OverriddenMethod);
+				}
 			}
 
 			return overridenMethodDescriptor;

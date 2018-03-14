@@ -44,5 +44,29 @@ namespace Tests
 		{
 			BasicTests.TestUpdateMethodSimpleCall(AnalysisStrategyKind.ONDEMAND_ORLEANS);
 		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalOrleans")]
+		public void TestSoundness1OnDemandOrleans()
+		{
+			BasicTests.TestSoundness1(AnalysisStrategyKind.ONDEMAND_ORLEANS);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalOrleans")]
+		public void TestSoundness2OnDemandOrleans()
+		{
+			BasicTests.TestSoundness2(AnalysisStrategyKind.ONDEMAND_ORLEANS);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalOrleans")]
+		public void TestSoundness3OnDemandOrleans()
+		{
+			BasicTests.TestSoundness3(AnalysisStrategyKind.ONDEMAND_ORLEANS);
+		}
 	}
 }
