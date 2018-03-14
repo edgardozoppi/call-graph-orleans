@@ -31,6 +31,12 @@ namespace Console
 	{
 		public static CommandResult Run(string programPath, string workingDirectory, string command)
 		{
+			// This is not needed if git is in the PATH.
+			if (programPath == "git")
+			{
+				programPath = @"C:\Program Files\Git\cmd\git.exe";
+			}
+
 			//var programFilesDirectory = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
 			//var outputTempFilePath = Path.GetTempFileName();
 
