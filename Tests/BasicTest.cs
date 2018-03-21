@@ -745,6 +745,230 @@ class Program
 				strategy);
 		}
 
+		public static void TestSoundness4(AnalysisStrategyKind strategy)
+		{
+			#region original source code
+			var source = @"
+using System;
+
+class B
+{
+	public virtual void Target(B p)
+	{
+		p.Foo();
+	}
+
+	public virtual void Foo() { }
+}
+
+class A : B
+{
+	public override void Target(B p) { }
+	public override void Foo() { }
+}
+
+class Program
+{
+	public static B M()
+	{
+		var res = new A();
+		res = new B();
+		return res;
+	}
+
+    public static void Main()
+    {
+		B r = M();
+		B arg = new A();
+		arg = new B();
+		r.Target(arg);
+    }
+}";
+			#endregion
+
+			#region modified source code
+			var newSource = @"
+using System;
+
+class B
+{
+	public virtual void Target(B p)
+	{
+		p.Foo();
+	}
+
+	public virtual void Foo() { }
+}
+
+class A : B
+{
+	public override void Target(B p) { }
+	public override void Foo() { }
+}
+
+class Program
+{
+	public static B M()
+	{
+		var res = new A();
+		return res;
+	}
+
+    public static void Main()
+    {
+		B r = M();
+		B arg = new A();
+		arg = new B();
+		r.Target(arg);
+    }
+}";
+			#endregion
+
+			TestUtils.AnalyzeExample(source,
+				(s, callgraph) =>
+				{
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("Program", "Main", true), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Target"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Foo"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Target"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Foo"), callgraph));
+
+				},
+				(s) =>
+				{
+					File.WriteAllText(TestConstants.DocumentPath, newSource);
+					var modifiedDocuments = new string[] { TestConstants.DocumentPath };
+
+					s.ApplyModificationsAsync(modifiedDocuments).Wait();
+
+					File.Delete(TestConstants.DocumentPath);
+				},
+				(s, callgraph) =>
+				{
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("Program", "Main", true), callgraph));
+					Assert.IsFalse(s.IsReachable(new MethodDescriptor("B", "Target"), callgraph));
+					Assert.IsFalse(s.IsReachable(new MethodDescriptor("B", "Foo"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Target"), callgraph));
+					Assert.IsFalse(s.IsReachable(new MethodDescriptor("A", "Foo"), callgraph));
+				},
+				strategy);
+		}
+
+		public static void TestSoundness5(AnalysisStrategyKind strategy)
+		{
+			#region original source code
+			var source = @"
+using System;
+
+class B
+{
+	public virtual void Target(B p)
+	{
+		p.Foo();
+	}
+
+	public virtual void Foo() { }
+}
+
+class A : B
+{
+	public override void Target(B p) { }
+	public override void Foo() { }
+}
+
+class Program
+{
+	public static B M()
+	{
+		var res = new A();
+		res = new B();
+		return res;
+	}
+
+    public static void Main()
+    {
+		B b = new B();
+		b.Target(b);
+
+		B r = M();
+		B arg = new A();
+		arg = new B();
+		r.Target(arg);
+    }
+}";
+			#endregion
+
+			#region modified source code
+			var newSource = @"
+using System;
+
+class B
+{
+	public virtual void Target(B p)
+	{
+		p.Foo();
+	}
+
+	public virtual void Foo() { }
+}
+
+class A : B
+{
+	public override void Target(B p) { }
+	public override void Foo() { }
+}
+
+class Program
+{
+	public static B M()
+	{
+		var res = new A();
+		return res;
+	}
+
+    public static void Main()
+    {
+		B b = new B();
+		b.Target(b);
+
+		B r = M();
+		B arg = new A();
+		arg = new B();
+		r.Target(arg);
+    }
+}";
+			#endregion
+
+			TestUtils.AnalyzeExample(source,
+				(s, callgraph) =>
+				{
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("Program", "Main", true), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Target"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Foo"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Target"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Foo"), callgraph));
+
+				},
+				(s) =>
+				{
+					File.WriteAllText(TestConstants.DocumentPath, newSource);
+					var modifiedDocuments = new string[] { TestConstants.DocumentPath };
+
+					s.ApplyModificationsAsync(modifiedDocuments).Wait();
+
+					File.Delete(TestConstants.DocumentPath);
+				},
+				(s, callgraph) =>
+				{
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("Program", "Main", true), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Target"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Foo"), callgraph));
+					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Target"), callgraph));
+					Assert.IsFalse(s.IsReachable(new MethodDescriptor("A", "Foo"), callgraph));
+				},
+				strategy);
+		}
+
 		public static void TestGenericMethod(AnalysisStrategyKind strategy)
 		{
 			#region source code

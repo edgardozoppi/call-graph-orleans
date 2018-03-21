@@ -71,5 +71,21 @@ namespace Tests
 		{
 			BasicTests.TestSoundness3(AnalysisStrategyKind.ONDEMAND_ASYNC);
 		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestSoundness4OnDemandAsync()
+		{
+			BasicTests.TestSoundness4(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
+
+		[TestMethod]
+		[TestCategory("Soundness")]
+		[TestCategory("IncrementalAsync")]
+		public void TestSoundness5OnDemandAsync()
+		{
+			BasicTests.TestSoundness5(AnalysisStrategyKind.ONDEMAND_ASYNC);
+		}
 	}
 }
