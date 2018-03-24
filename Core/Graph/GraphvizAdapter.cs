@@ -33,7 +33,7 @@ namespace OrleansClient
 					var node = data.Node;
 					var types = data.Types;
 					var invoc = data.CallNode;
-					var deletions = data.DeletedElems;
+					var deletions = data.DeletedTypes;
 					//var node = (N)v["N"] ;
 					//var elems = v["Elems"] as ISet<T>;
 					//var invoc = v["Call"];

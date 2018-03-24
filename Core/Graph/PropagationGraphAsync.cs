@@ -42,6 +42,12 @@ namespace OrleansClient
 
 		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, string edge, PropGraphNodeDescriptor n)
 		{
+			if (IsCallNode(n) || IsDelegateCallNode(n))
+			{
+				var msg = string.Format("DiffPropAsync invoked with a call node '{0}'", n);
+				throw new Exception(msg);
+			}
+
 			var ts = GetTypes(n);
 			var oldCount = ts.Count;
 			var compatibleTypes = new HashSet<TypeDescriptor>();
@@ -65,7 +71,6 @@ namespace OrleansClient
 			if (newCount > oldCount)
 			{
 				this.UpdateCount += newCount - oldCount;
-
 				this.AddToWorkList(n);
 				return true;
 			}
@@ -134,7 +139,14 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					await DiffPropAsync(types, analysisNode.ToString(), n1);
+					if (IsCallNode(n1) || IsDelegateCallNode(n1))
+					{
+						calls.Add(GetInvocationInfo(n1));
+					}
+					else
+					{
+						await DiffPropAsync(types, analysisNode.ToString(), n1);
+					}
 
 					//var e = graph.GetEdge(v.Id, v1.Id);
 					//e.Value.Types = types;
@@ -182,7 +194,14 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					DiffDelProp(n1, analysisNode.ToString(), types);
+					if (IsCallNode(n1) || IsDelegateCallNode(n1))
+					{
+						calls.Add(GetInvocationInfo(n1));
+					}
+					else
+					{
+						DiffDelProp(n1, analysisNode.ToString(), types);
+					}
 
 					//if (DiffDelProp(n1, analysisNode.ToString(), types))
 					//{

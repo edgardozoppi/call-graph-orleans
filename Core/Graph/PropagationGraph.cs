@@ -191,7 +191,7 @@ namespace OrleansClient
 		internal void RemoveTypes(PropGraphNodeDescriptor n, IEnumerable<TypeDescriptor> ts)
 		{
 			var v = AddVertex(n);
-			v.Value.DeletedElems.UnionWith(ts);
+			v.Value.DeletedTypes.UnionWith(ts);
 		}
 
 		internal PropGraphNodeDescriptor GetAnalysisNode(GraphNode<GraphNodeAnnotationData> v)
@@ -336,7 +336,7 @@ namespace OrleansClient
 			if (vIndex.TryGetValue(m, out index))
 			{
 				var v = graph.GetNode(index);
-				return v != null ? v.Value.DeletedElems : res;
+				return v != null ? v.Value.DeletedTypes : res;
 			}
 
 			return res;
@@ -369,6 +369,11 @@ namespace OrleansClient
 
 		internal bool DiffProp(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> src)
 		{
+			if (IsCallNode(n) || IsDelegateCallNode(n))
+			{
+				var msg = string.Format("DiffProp invoked with a call node '{0}'", n);
+				throw new Exception(msg);
+			}
 			var ts = GetTypes(n);
 			var oldCount = ts.Count;
 			var compatibleTypes = src.Where(t => !ts.Contains(t) && IsAssignable(t, n));
@@ -421,6 +426,11 @@ namespace OrleansClient
 
 		internal bool DiffDelProp(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> src)
 		{
+			if (IsCallNode(n) || IsDelegateCallNode(n))
+			{
+				var msg = string.Format("DiffDelProp invoked with a call node '{0}'", n);
+				throw new Exception(msg);
+			}
 			var delTypes = GetDeletedTypes(n);
 			if (delTypes.IsSupersetOf(src))
 				return false;
