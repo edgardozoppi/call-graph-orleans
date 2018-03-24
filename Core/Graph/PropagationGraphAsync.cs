@@ -26,40 +26,45 @@ namespace OrleansClient
 		public int UpdateCount { get; private set; }
 		public int WorklistSize { get; private set; }
 
-		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, PropGraphNodeDescriptor n, PropagationKind propKind)
+		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, string edge, PropGraphNodeDescriptor n, PropagationKind propKind)
 		{
 			Logger.LogS("PropagationGraph", "DiffPropAsync", "Diff({0},{1})", src, n);
 
 			if (propKind == PropagationKind.REMOVE_TYPES || propKind == PropagationKind.REMOVE_ASSIGNMENT)
 			{
-				return DiffDelProp(src, n);
+				return DiffDelProp(n, edge, src);
 			}
 			else
 			{
-				return await DiffPropAsync(src, n);
+				return await DiffPropAsync(src, edge, n);
 			}
 		}
 
-		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, PropGraphNodeDescriptor n)
+		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, string edge, PropGraphNodeDescriptor n)
 		{
-			var ts = GetTypesMS(n);
-			int c = ts.Count;
+			var ts = GetTypes(n);
+			var oldCount = ts.Count;
+			var compatibleTypes = new HashSet<TypeDescriptor>();
+
 			foreach (var t in src)
 			{
-				//if(!ts.Contains(t) )
+				if (!ts.Contains(t))
 				{
 					var isAsig = await IsAssignableAsync(t, n);
+
 					if (isAsig)
 					{
-						ts.Add(t);
-
+						compatibleTypes.Add(t);
 					}
 				}
 			}
-			//ts.UnionWith(src.Where(t => !ts.Contains(t) && (await IsAssignableAsync(t, n))));
-			if (ts.Count > c)
+
+			AddTypes(n, edge, compatibleTypes);
+			ts = GetTypes(n);
+			var newCount = ts.Count;
+			if (newCount > oldCount)
 			{
-				this.UpdateCount += ts.Count - c;
+				this.UpdateCount += newCount - oldCount;
 
 				this.AddToWorkList(n);
 				return true;
@@ -129,10 +134,10 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					await DiffPropAsync(types, n1);
+					await DiffPropAsync(types, analysisNode.ToString(), n1);
 
-					var e = graph.GetEdge(v.Id, v1.Id);
-					e.Value.Types = types;
+					//var e = graph.GetEdge(v.Id, v1.Id);
+					//e.Value.Types = types;
 
 					DiffPropDelegates(GetDelegates(analysisNode), n1);
 				}
@@ -177,15 +182,13 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					// Check here if some ingoing edge propagate some of the removed types
-					//if (true)
-					{
-						if (DiffDelProp(types, n1))
-						{
-							var e = graph.GetEdge(v.Id, v1.Id);
-							e.Value.Types.ExceptWith(types);
-						}
-					}
+					DiffDelProp(n1, analysisNode.ToString(), types);
+
+					//if (DiffDelProp(n1, analysisNode.ToString(), types))
+					//{
+					//	var e = graph.GetEdge(v.Id, v1.Id);
+					//	e.Value.Types.ExceptWith(types);
+					//}
 
 					// DiffPropDelegates(GetDelegates(analysisNode), n1);
 				}
@@ -351,7 +354,7 @@ namespace OrleansClient
 						{
 							potentialTypes = await this.GetPotentialTypesAsync(callInfo.Receiver, callInfo, codeProvider);
 
-							this.Add(callInfo.Receiver, potentialTypes);
+							this.Add(callInfo.Receiver, "declared_type", potentialTypes);
 							this.AddToWorkList(callInfo.Receiver);
 							//unknownCallees.Add(callInfo.Receiver);
 							hasUnknownCallees = true;

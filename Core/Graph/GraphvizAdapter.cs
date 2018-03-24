@@ -31,7 +31,7 @@ namespace OrleansClient
 				{
 					var data = v.Value;
 					var node = data.Node;
-					var elems = data.Elems;
+					var types = data.Types;
 					var invoc = data.CallNode;
 					var deletions = data.DeletedElems;
 					//var node = (N)v["N"] ;
@@ -40,7 +40,7 @@ namespace OrleansClient
 
 
 
-					string elemsStr = ElemsToStr(elems);
+					string elemsStr = ElemsToStr(types);
 					string deletionsStr = ElemsToStr(deletions);
 
 					if (invoc == null)
@@ -80,26 +80,18 @@ namespace OrleansClient
 			}
 		}
 
-		private static string ElemsToStr(Bag<TypeDescriptor> elems)
-		{
-
-			var sb = new StringBuilder();
-			if (elems != null)
-			{
-				foreach (var e in elems.AsSet())
-					sb.Append("(" + e + ":" + elems.Occurrences(e) + ")");
-			}
-			return sb.ToString();
-		}
 		private static string ElemsToStr(ISet<TypeDescriptor> elems)
 		{
-
 			var sb = new StringBuilder();
+
 			if (elems != null)
 			{
 				foreach (var e in elems)
+				{
 					sb.Append(e + " ");
+				}
 			}
+
 			return sb.ToString();
 		}
 	}

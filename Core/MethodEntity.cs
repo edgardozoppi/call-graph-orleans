@@ -180,13 +180,27 @@ namespace OrleansClient.Analysis
 			{
 				if (parameter != null)
 				{
-					this.PropGraph.Add(parameter, entity.PropGraph.GetTypes(parameter));
+					var edges = this.PropGraph.GetEdges(parameter);
+
+					foreach (var edge in edges)
+					{
+						var types = entity.PropGraph.GetTypes(parameter, edge);
+						this.PropGraph.Add(parameter, edge, types);
+					}
+
 					this.PropGraph.AddToWorkList(parameter);
 				}
 			}
 			if (this.ThisRef != null)
 			{
-				this.PropGraph.Add(this.ThisRef, entity.PropGraph.GetTypes(entity.ThisRef));
+				var edges = this.PropGraph.GetEdges(this.ThisRef);
+
+				foreach (var edge in edges)
+				{
+					var types = entity.PropGraph.GetTypes(entity.ThisRef, edge);
+					this.PropGraph.Add(this.ThisRef, edge, types);
+				}
+
 				this.PropGraph.AddToWorkList(this.ThisRef);
 			}
 

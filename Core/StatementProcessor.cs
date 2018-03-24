@@ -88,7 +88,7 @@ namespace OrleansClient.Analysis
 
 				if (!rhs.Type.IsConcreteType)
 				{
-					PropagationGraph.Add(rhs, rhs.Type);
+					PropagationGraph.Add(rhs, "declared_type", rhs.Type);
 					PropagationGraph.AddToWorkList(rhs);
 				}
 			}
@@ -103,7 +103,7 @@ namespace OrleansClient.Analysis
 		{
 			if (lhs != null)
 			{
-				this.PropagationGraph.Add(lhs, t);
+				this.PropagationGraph.Add(lhs, "declared_type", t);
 				this.PropagationGraph.AddToWorkList(lhs);
 			}
 			this.InstantiatedTypes.Add(t);

@@ -947,7 +947,6 @@ class Program
 					Assert.IsTrue(s.IsReachable(new MethodDescriptor("B", "Foo"), callgraph));
 					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Target"), callgraph));
 					Assert.IsTrue(s.IsReachable(new MethodDescriptor("A", "Foo"), callgraph));
-
 				},
 				(s) =>
 				{

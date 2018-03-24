@@ -236,10 +236,12 @@ namespace OrleansClient.Analysis
 				return new PropagationEffects(calleesInfo, false);
 			}
 
+			var edge = string.Format("{0} {1}", callMessageInfo.Caller, callMessageInfo.CallNode);
+
 			if (this.methodEntity.ThisRef != null && callMessageInfo.ReceiverType != null)
 			{
 				var receiverPossibleTypes = new TypeDescriptor[] { callMessageInfo.ReceiverType };
-				await this.methodEntity.PropGraph.DiffPropAsync(receiverPossibleTypes, this.methodEntity.ThisRef, callMessageInfo.PropagationKind);
+				await this.methodEntity.PropGraph.DiffPropAsync(receiverPossibleTypes, edge, this.methodEntity.ThisRef, callMessageInfo.PropagationKind);
 			}
 
 			for (var i = 0; i < this.methodEntity.ParameterNodes.Count; i++)
@@ -260,7 +262,7 @@ namespace OrleansClient.Analysis
 						argumentPossibleTypes.Add(parameterNode.Type);
 					}
 
-					await this.methodEntity.PropGraph.DiffPropAsync(argumentPossibleTypes, parameterNode, callMessageInfo.PropagationKind);
+					await this.methodEntity.PropGraph.DiffPropAsync(argumentPossibleTypes, edge, parameterNode, callMessageInfo.PropagationKind);
 				}
 			}
 
@@ -286,8 +288,9 @@ namespace OrleansClient.Analysis
 
 			if (returnMessageInfo.LHS != null)
 			{
+				var edge = string.Format("{0}", returnMessageInfo.Callee);
 				var possibleTypes = returnMessageInfo.ResultPossibleTypes.ToList();
-				await this.methodEntity.PropGraph.DiffPropAsync(possibleTypes, returnMessageInfo.LHS, returnMessageInfo.PropagationKind);
+				await this.methodEntity.PropGraph.DiffPropAsync(possibleTypes, edge, returnMessageInfo.LHS, returnMessageInfo.PropagationKind);
 			}
 
 			/// We need to recompute possible calless 
@@ -661,12 +664,12 @@ namespace OrleansClient.Analysis
 		{
 			foreach (var parameterNode in this.methodEntity.ParameterNodes)
 			{
-				this.methodEntity.PropGraph.Add(parameterNode, parameterNode.Type);
+				this.methodEntity.PropGraph.Add(parameterNode, "declared_type", parameterNode.Type);
 			}
 
 			if (this.methodEntity.ThisRef != null)
 			{
-				this.methodEntity.PropGraph.Add(this.methodEntity.ThisRef, this.methodEntity.ThisRef.Type);
+				this.methodEntity.PropGraph.Add(this.methodEntity.ThisRef, "declared_type", this.methodEntity.ThisRef.Type);
 			}
 
 			return Task.CompletedTask;

@@ -105,10 +105,16 @@ namespace OrleansClient
 			var v = AddVertex(analysisNode);
 		}
 
-		internal void Add(PropGraphNodeDescriptor n, TypeDescriptor t)
+		internal void Add(PropGraphNodeDescriptor n, string edge, TypeDescriptor t)
 		{
 			var v = AddVertex(n);
-			v.Value.Elems.Add(t);
+			v.Value.AddType(edge, t);
+		}
+
+		internal void Add(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> ts)
+		{
+			var v = AddVertex(n);
+			v.Value.AddTypes(edge, ts);
 		}
 
 		//public void AddDelegate(DelegateVariableNode delegateVariableNode, MethodDescriptor methodDescriptor)
@@ -182,12 +188,6 @@ namespace OrleansClient
 
 		}
 
-		internal void Add(PropGraphNodeDescriptor n, IEnumerable<TypeDescriptor> ts)
-		{
-			var v = AddVertex(n);
-			v.Value.Elems.UnionWith(ts);
-		}
-
 		internal void RemoveTypes(PropGraphNodeDescriptor n, IEnumerable<TypeDescriptor> ts)
 		{
 			var v = AddVertex(n);
@@ -242,15 +242,29 @@ namespace OrleansClient
 			}
 		}
 
-		internal Bag<TypeDescriptor> GetTypesMS(PropGraphNodeDescriptor analysisNode)
+		internal IEnumerable<string> GetEdges(PropGraphNodeDescriptor analysisNode)
 		{
-			var result = new Bag<TypeDescriptor>();
+			var result = Enumerable.Empty<string>();
 			long index;
 
 			if (vIndex.TryGetValue(analysisNode, out index))
 			{
 				var v = graph.GetNode(index);
-				return v != null ? v.Value.Elems : result;
+				return v != null ? v.Value.Edges : result;
+			}
+
+			return result;
+		}
+
+		internal IEnumerable<TypeDescriptor> GetTypes(PropGraphNodeDescriptor analysisNode, string edge)
+		{
+			var result = Enumerable.Empty<TypeDescriptor>();
+			long index;
+
+			if (vIndex.TryGetValue(analysisNode, out index))
+			{
+				var v = graph.GetNode(index);
+				return v != null ? v.Value.GetTypes(edge) : result;
 			}
 
 			return result;
@@ -264,10 +278,40 @@ namespace OrleansClient
 			if (vIndex.TryGetValue(analysisNode, out index))
 			{
 				var v = graph.GetNode(index);
-				return v != null ? v.Value.Elems.AsSet() : result;
+				return v != null ? v.Value.Types : result;
 			}
 
 			return result;
+		}
+
+		internal void AddTypes(PropGraphNodeDescriptor analysisNode, string edge, IEnumerable<TypeDescriptor> types)
+		{
+			long index;
+
+			if (vIndex.TryGetValue(analysisNode, out index))
+			{
+				var v = graph.GetNode(index);
+
+				if (v != null)
+				{
+					v.Value.AddTypes(edge, types);
+				}
+			}
+		}
+
+		internal void RemoveTypes(PropGraphNodeDescriptor analysisNode, string edge, IEnumerable<TypeDescriptor> types)
+		{
+			long index;
+
+			if (vIndex.TryGetValue(analysisNode, out index))
+			{
+				var v = graph.GetNode(index);
+
+				if (v != null)
+				{
+					v.Value.RemoveTypes(edge, types);
+				}
+			}
 		}
 
 		public ISet<MethodDescriptor> GetDelegates(PropGraphNodeDescriptor analysisNode)
@@ -311,24 +355,27 @@ namespace OrleansClient
 		//    return false;
 		//}
 
-		internal bool DiffProp(IEnumerable<TypeDescriptor> src, PropGraphNodeDescriptor n, PropagationKind propKind)
+		internal bool DiffProp(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> src, PropagationKind propKind)
 		{
 			if (propKind == PropagationKind.REMOVE_TYPES || propKind == PropagationKind.REMOVE_ASSIGNMENT)
 			{
-				return DiffDelProp(src, n);
+				return DiffDelProp(n, edge, src);
 			}
 			else
 			{
-				return DiffProp(src, n);
+				return DiffProp(n, edge, src);
 			}
 		}
 
-		internal bool DiffProp(IEnumerable<TypeDescriptor> src, PropGraphNodeDescriptor n)
+		internal bool DiffProp(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> src)
 		{
-			var ts = GetTypesMS(n);
-			int c = ts.Count;
-			ts.UnionWith(src.Where(t => !ts.Contains(t) && IsAssignable(t, n)));
-			if (ts.Count > c)
+			var ts = GetTypes(n);
+			var oldCount = ts.Count;
+			var compatibleTypes = src.Where(t => !ts.Contains(t) && IsAssignable(t, n));
+			AddTypes(n, edge, compatibleTypes);
+			ts = GetTypes(n);
+			var newCount = ts.Count;
+			if (newCount > oldCount)
 			{
 				this.AddToWorkList(n);
 				return true;
@@ -372,19 +419,20 @@ namespace OrleansClient
 			return res;
 		}
 
-		internal bool DiffDelProp(IEnumerable<TypeDescriptor> src, PropGraphNodeDescriptor n)
+		internal bool DiffDelProp(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> src)
 		{
 			var delTypes = GetDeletedTypes(n);
 			if (delTypes.IsSupersetOf(src))
 				return false;
-			var ts = GetTypesMS(n);
-			int c = ts.Count;
-			var removed = ts.ExceptWith(src);
-			if (removed.Count > 0)
+			var oldTypes = GetTypes(n);
+			oldTypes = new HashSet<TypeDescriptor>(oldTypes);
+			RemoveTypes(n, edge, src);
+			var newTypes = GetTypes(n);
+			if (newTypes.Count < oldTypes.Count)
 			{
+				oldTypes.ExceptWith(newTypes);
 				this.AddToDeletionWorkList(n);
-				// It should be the 
-				this.RemoveTypes(n, removed);
+				this.RemoveTypes(n, oldTypes);
 				return true;
 			}
 			return false;
@@ -518,17 +566,17 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					DiffProp(types, n1);
+					DiffProp(n1, analysisNode.ToString(), types);
 
-					var e = graph.GetEdge(v.Id, v1.Id);
-					e.Value.Types = types;
+					//var e = graph.GetEdge(v.Id, v1.Id);
+					//e.Value.Types = types;
 
 					DiffPropDelegates(GetDelegates(analysisNode), n1);
 				}
 			}
 
 			HasBeenPropagated = true;
-			return new PropagationEffects(calls, retModified);
+			return new PropagationEffects(calls, retModified, PropagationKind.ADD_TYPES);
 		}
 
 		internal PropagationEffects PropagateDeletion()
@@ -538,45 +586,39 @@ namespace OrleansClient
 
 			while (deletionWorkList.Count > 0)
 			{
-				var n = deletionWorkList.First();
-				deletionWorkList.Remove(n);
+				var analysisNode = deletionWorkList.First();
+				deletionWorkList.Remove(analysisNode);
 
-				if (IsCallNode(n) || IsDelegateCallNode(n))
+				if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
 				{
-					calls.Add(GetInvocationInfo(n));
+					calls.Add(GetInvocationInfo(analysisNode));
 					continue;
 				}
-				if (IsRetNode(n))
+				if (IsRetNode(analysisNode))
 				{
 					retModified = true;
 				}
 
-				var v = GetVertex(n);
-				var types = GetDeletedTypes(n);
+				var v = GetVertex(analysisNode);
+				var types = GetDeletedTypes(analysisNode);
 
 				foreach (var v1 in graph.GetTargets(v.Id))
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					// Check here if some ingoing edge propagate some of the removed types
-					if (true)
-					{
-						if (DiffDelProp(types, n1))
-						{
-							var e = graph.GetEdge(v.Id, v1.Id);
-							e.Value.Types.ExceptWith(types);
-						}
-					}
+					DiffDelProp(n1, analysisNode.ToString(), types);
 
-					// DiffPropDelegates(GetDelegates(n), n1);
+					//if (DiffDelProp(n1, analysisNode.ToString(), types))
+					//{
+					//	var e = graph.GetEdge(v.Id, v1.Id);
+					//	e.Value.Types.ExceptWith(types);
+					//}
 
+					// DiffPropDelegates(GetDelegates(analysisNode), n1);
 				}
-
-				var ts = GetTypesMS(n);
-				var removed = ts.ExceptWith(types);
 			}
 
-			return new PropagationEffects(calls, retModified);
+			return new PropagationEffects(calls, retModified, PropagationKind.REMOVE_TYPES);
 		}
 
 		private IEnumerable<TypeDescriptor> GetInGoingTypesFromEdges(Vertex v)
