@@ -115,6 +115,7 @@ namespace OrleansClient.Analysis
 
 			await this.PopulatePropagationEffectsInfo(propagationEffects, propKind);
 
+			this.methodEntity.PropGraph.RemoveAddedTypes();
 			this.methodEntity.PropGraph.RemoveDeletedTypes();
 
 			Logger.LogS("MethodEntityGrain", "PropagateAsync", "End Propagation for {0} ", this.methodEntity.MethodDescriptor);

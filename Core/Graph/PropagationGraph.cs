@@ -11,19 +11,19 @@ using Common;
 
 namespace OrleansClient
 {
-    /// <summary>
-    /// Propagation graph: is the main data structure of the algorithm
-    /// The basic idea is that concrete types flow from the graph nodes which represent proggram expressions (variables, fields, invocaitons)
-    /// The invocations are dummy nodes. Their role is to trigger the propagation of data to the callees. When a type reach an invocation 
-    /// it is marked to be processesd later
-    /// </summary>
-    /// <typeparam name="N"></typeparam>
-    /// <typeparam name="T"></typeparam>
-    /// <typeparam name="M"></typeparam>
-    [Serializable]
-    internal partial class PropagationGraph
+	/// <summary>
+	/// Propagation graph: is the main data structure of the algorithm
+	/// The basic idea is that concrete types flow from the graph nodes which represent proggram expressions (variables, fields, invocaitons)
+	/// The invocations are dummy nodes. Their role is to trigger the propagation of data to the callees. When a type reach an invocation 
+	/// it is marked to be processesd later
+	/// </summary>
+	/// <typeparam name="N"></typeparam>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="M"></typeparam>
+	[Serializable]
+	internal partial class PropagationGraph
 	{
-   		/// <summary>
+		/// <summary>
 		/// The work list used during the propagation
 		/// </summary>
 		private ISet<PropGraphNodeDescriptor> workList = new HashSet<PropGraphNodeDescriptor>();
@@ -52,10 +52,10 @@ namespace OrleansClient
 			//private set { callNodes = value; }
 		}
 
-        // This is not needed to be serialized. Used during propagation.
-        // Can be removed if DiifProp received a codeProvider as parameter
-        [NonSerialized]
-        private IProjectCodeProvider codeProvider;
+		// This is not needed to be serialized. Used during propagation.
+		// Can be removed if DiifProp received a codeProvider as parameter
+		[NonSerialized]
+		private IProjectCodeProvider codeProvider;
 
 		internal PropagationGraph()
 		{
@@ -109,12 +109,14 @@ namespace OrleansClient
 		{
 			var v = AddVertex(n);
 			v.Value.AddType(edge, t);
+			v.Value.AddedTypes.Add(t);
 		}
 
 		internal void Add(PropGraphNodeDescriptor n, string edge, IEnumerable<TypeDescriptor> ts)
 		{
 			var v = AddVertex(n);
 			v.Value.AddTypes(edge, ts);
+			v.Value.AddedTypes.UnionWith(ts);
 		}
 
 		//public void AddDelegate(DelegateVariableNode delegateVariableNode, MethodDescriptor methodDescriptor)
@@ -151,7 +153,7 @@ namespace OrleansClient
 
 		public CallInfo GetInvocationInfo(PropGraphNodeDescriptor callNode)
 		{
-            Contract.Requires(IsCallNode(callNode) || IsDelegateCallNode(callNode));
+			Contract.Requires(IsCallNode(callNode) || IsDelegateCallNode(callNode));
 			long index;
 
 			if (vIndex.TryGetValue(callNode, out index))
@@ -164,7 +166,7 @@ namespace OrleansClient
 			return null;
 		}
 
-        [Pure]
+		[Pure]
 		public bool IsCallNode(PropGraphNodeDescriptor n)
 		{
 			var index = vIndex[n];
@@ -179,13 +181,19 @@ namespace OrleansClient
 			return v.Value.HasRetValue;
 		}
 
-        [Pure]
+		[Pure]
 		public bool IsDelegateCallNode(PropGraphNodeDescriptor n)
 		{
 			var index = vIndex[n];
 			var v = graph.GetNode(index);
 			return v.Value.CallNode != null && v.Value.CallNode is DelegateCallInfo;
 
+		}
+
+		internal void AddTypes(PropGraphNodeDescriptor n, IEnumerable<TypeDescriptor> ts)
+		{
+			var v = AddVertex(n);
+			v.Value.AddedTypes.UnionWith(ts);
 		}
 
 		internal void RemoveTypes(PropGraphNodeDescriptor n, IEnumerable<TypeDescriptor> ts)
@@ -328,6 +336,20 @@ namespace OrleansClient
 			return result;
 		}
 
+		internal ISet<TypeDescriptor> GetAddedTypes(PropGraphNodeDescriptor m)
+		{
+			var res = new HashSet<TypeDescriptor>();
+			long index;
+
+			if (vIndex.TryGetValue(m, out index))
+			{
+				var v = graph.GetNode(index);
+				return v != null ? v.Value.AddedTypes : res;
+			}
+
+			return res;
+		}
+
 		internal ISet<TypeDescriptor> GetDeletedTypes(PropGraphNodeDescriptor m)
 		{
 			var res = new HashSet<TypeDescriptor>();
@@ -374,27 +396,35 @@ namespace OrleansClient
 				var msg = string.Format("DiffProp invoked with a call node '{0}'", n);
 				throw new Exception(msg);
 			}
-			var ts = GetTypes(n);
-			var oldCount = ts.Count;
-			var compatibleTypes = src.Where(t => !ts.Contains(t) && IsAssignable(t, n));
+
+			var newTypes = GetAddedTypes(n);
+			if (newTypes.IsSupersetOf(src))
+				return false;
+
+			var oldTypes = GetTypes(n);
+			var compatibleTypes = src.Where(t => !oldTypes.Contains(t) && IsAssignable(t, n));
 			AddTypes(n, edge, compatibleTypes);
-			ts = GetTypes(n);
-			var newCount = ts.Count;
-			if (newCount > oldCount)
+			newTypes = GetTypes(n);
+			newTypes = new HashSet<TypeDescriptor>(newTypes);
+
+			if (newTypes.Count > oldTypes.Count)
 			{
+				newTypes.ExceptWith(oldTypes);
 				this.AddToWorkList(n);
+				this.AddTypes(n, newTypes);
 				return true;
 			}
+
 			return false;
 		}
 
 		internal bool IsAssignable(TypeDescriptor t1, PropGraphNodeDescriptor analysisNode)
 		{
-            // Contract.Assert(this.codeProvider!=null);
-            if(codeProvider==null)
-            {
-                return true;
-            }
+			// Contract.Assert(this.codeProvider!=null);
+			if (codeProvider == null)
+			{
+				return true;
+			}
 
 			var res = true;
 			// Ugly
@@ -402,18 +432,18 @@ namespace OrleansClient
 
 			var type2 = analysisNode.Type;
 
-//			if (!type1.IsSubtype(type2))
-            // Diego: This requires a Code Provider. Now it will simply fail.
-            if (!this.codeProvider.IsSubtypeAsync(type1, type2).Result)
-            {
-                if (!type2.IsDelegate)
-                {
-                    if (!IsCallNode(analysisNode) && !IsDelegateCallNode(analysisNode))
-                    {
-                        return false;
-                    }
-                }
-            }
+			//			if (!type1.IsSubtype(type2))
+			// Diego: This requires a Code Provider. Now it will simply fail.
+			if (!this.codeProvider.IsSubtypeAsync(type1, type2).Result)
+			{
+				if (!type2.IsDelegate)
+				{
+					if (!IsCallNode(analysisNode) && !IsDelegateCallNode(analysisNode))
+					{
+						return false;
+					}
+				}
+			}
 			//foreach(var t2 in ts.AsSet())
 			//{
 			//    AnalysisType type2 = (AnalysisType)t2;
@@ -431,13 +461,16 @@ namespace OrleansClient
 				var msg = string.Format("DiffDelProp invoked with a call node '{0}'", n);
 				throw new Exception(msg);
 			}
+
 			var delTypes = GetDeletedTypes(n);
 			if (delTypes.IsSupersetOf(src))
 				return false;
+
 			var oldTypes = GetTypes(n);
 			oldTypes = new HashSet<TypeDescriptor>(oldTypes);
 			RemoveTypes(n, edge, src);
 			var newTypes = GetTypes(n);
+
 			if (newTypes.Count < oldTypes.Count)
 			{
 				oldTypes.ExceptWith(newTypes);
@@ -445,6 +478,7 @@ namespace OrleansClient
 				this.RemoveTypes(n, oldTypes);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -459,6 +493,14 @@ namespace OrleansClient
 				return true;
 			}
 			return false;
+		}
+
+		public void RemoveAddedTypes()
+		{
+			foreach (var n in this.Nodes)
+			{
+				this.GetAddedTypes(n).Clear();
+			}
 		}
 
 		public void RemoveDeletedTypes()
@@ -543,16 +585,16 @@ namespace OrleansClient
 		}
 
 		internal void SetCodeProvider(IProjectCodeProvider codeProvider)
-        {
-            this.codeProvider = codeProvider;
-        }
+		{
+			this.codeProvider = codeProvider;
+		}
 
 		internal PropagationEffects Propagate(IProjectCodeProvider codeProvider)
 		{
-            this.codeProvider = codeProvider;
+			this.codeProvider = codeProvider;
 
 			var calls = new HashSet<CallInfo>();
-			bool retModified = false;
+			var retModified = false;
 
 			while (workList.Count > 0)
 			{
@@ -570,13 +612,20 @@ namespace OrleansClient
 				}
 
 				var v = GetVertex(analysisNode);
-				var types = GetTypes(analysisNode);
+				var types = GetAddedTypes(analysisNode);
 
 				foreach (var v1 in graph.GetTargets(v.Id))
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					DiffProp(n1, analysisNode.ToString(), types);
+					if (IsCallNode(n1) || IsDelegateCallNode(n1))
+					{
+						calls.Add(GetInvocationInfo(n1));
+					}
+					else
+					{
+						DiffProp(n1, analysisNode.ToString(), types);
+					}
 
 					//var e = graph.GetEdge(v.Id, v1.Id);
 					//e.Value.Types = types;
@@ -592,12 +641,12 @@ namespace OrleansClient
 		internal PropagationEffects PropagateDeletion()
 		{
 			var calls = new HashSet<CallInfo>();
-			bool retModified = false;
+			var retModified = false;
 
 			while (deletionWorkList.Count > 0)
 			{
 				var analysisNode = deletionWorkList.First();
-				deletionWorkList.Remove(analysisNode);
+				this.RemoveFromDeletionWorkList(analysisNode);
 
 				if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
 				{
@@ -616,7 +665,14 @@ namespace OrleansClient
 				{
 					var n1 = GetAnalysisNode(v1);
 
-					DiffDelProp(n1, analysisNode.ToString(), types);
+					if (IsCallNode(n1) || IsDelegateCallNode(n1))
+					{
+						calls.Add(GetInvocationInfo(n1));
+					}
+					else
+					{
+						DiffDelProp(n1, analysisNode.ToString(), types);
+					}
 
 					//if (DiffDelProp(n1, analysisNode.ToString(), types))
 					//{
@@ -642,56 +698,56 @@ namespace OrleansClient
 		}
 
 
-        internal ISet<TypeDescriptor> GetPotentialTypes(PropGraphNodeDescriptor n, MethodCallInfo callInfo, IProjectCodeProvider codeProvider)
-        {
-            return GetPotentialTypesAsync(n, callInfo, codeProvider).Result;
+		internal ISet<TypeDescriptor> GetPotentialTypes(PropGraphNodeDescriptor n, MethodCallInfo callInfo, IProjectCodeProvider codeProvider)
+		{
+			return GetPotentialTypesAsync(n, callInfo, codeProvider).Result;
 
-            //var result = new HashSet<TypeDescriptor>();
-            //var types = this.GetTypes(n);
+			//var result = new HashSet<TypeDescriptor>();
+			//var types = this.GetTypes(n);
 
-            //if (types.Count() == 0)
-            //{
-            //    /// We get the instantiated type that are compatible with the receiver type
-            //    types.UnionWith(
-            //        callInfo.InstantiatedTypes
-            //            .Where(type => codeProvider.IsSubtype(type, callInfo.Receiver.Type)));
-            //}
-            //if (types.Count() == 0)
-            //{
-            //    types.Add(callInfo.Receiver.Type);
-            //}
+			//if (types.Count() == 0)
+			//{
+			//    /// We get the instantiated type that are compatible with the receiver type
+			//    types.UnionWith(
+			//        callInfo.InstantiatedTypes
+			//            .Where(type => codeProvider.IsSubtype(type, callInfo.Receiver.Type)));
+			//}
+			//if (types.Count() == 0)
+			//{
+			//    types.Add(callInfo.Receiver.Type);
+			//}
 
-            //foreach (var typeDescriptor in types)
-            //{
-            //    // TO-DO fix by adding a where T: AnalysisType
-            //    if (typeDescriptor.IsConcreteType)
-            //    {
-            //        result.Add(typeDescriptor);
-            //    }
-            //    else
-            //    {
-            //        // If it is a declaredTyped it means we were not able to compute a concrete type
-            //        // Therefore, we instantiate all compatible types for the set of instantiated types
-            //        //result.UnionWith(this.InstatiatedTypes.Where(iType => iType.IsSubtype(typeDescriptor)));
-            //        Contract.Assert(callInfo.InstantiatedTypes != null);
-            //        // Diego: This requires a Code Provider. Now it will simply fail.
-            //        result.UnionWith(callInfo.InstantiatedTypes.Where(candidateTypeDescriptor
-            //                                => codeProvider.IsSubtype(candidateTypeDescriptor, typeDescriptor)));
-            //    }
-            //}
-            //return result;
-        }
+			//foreach (var typeDescriptor in types)
+			//{
+			//    // TO-DO fix by adding a where T: AnalysisType
+			//    if (typeDescriptor.IsConcreteType)
+			//    {
+			//        result.Add(typeDescriptor);
+			//    }
+			//    else
+			//    {
+			//        // If it is a declaredTyped it means we were not able to compute a concrete type
+			//        // Therefore, we instantiate all compatible types for the set of instantiated types
+			//        //result.UnionWith(this.InstatiatedTypes.Where(iType => iType.IsSubtype(typeDescriptor)));
+			//        Contract.Assert(callInfo.InstantiatedTypes != null);
+			//        // Diego: This requires a Code Provider. Now it will simply fail.
+			//        result.UnionWith(callInfo.InstantiatedTypes.Where(candidateTypeDescriptor
+			//                                => codeProvider.IsSubtype(candidateTypeDescriptor, typeDescriptor)));
+			//    }
+			//}
+			//return result;
+		}
 
-        internal ISet<MethodDescriptor> ComputeCalleesForNode(CallInfo invoInfo, IProjectCodeProvider codeProvider)
-        {
-            //TODO: Ugly... but we needed this refactor for moving stuff to the common project 
-            if (invoInfo is MethodCallInfo)
-            {
-                return ComputeCalleesForCallNode((MethodCallInfo)invoInfo, codeProvider);
-            }
-            Contract.Assert(invoInfo is DelegateCallInfo);
-            return ComputeCalleesForDelegateNode((DelegateCallInfo)invoInfo, codeProvider);
-        }
+		internal ISet<MethodDescriptor> ComputeCalleesForNode(CallInfo invoInfo, IProjectCodeProvider codeProvider)
+		{
+			//TODO: Ugly... but we needed this refactor for moving stuff to the common project 
+			if (invoInfo is MethodCallInfo)
+			{
+				return ComputeCalleesForCallNode((MethodCallInfo)invoInfo, codeProvider);
+			}
+			Contract.Assert(invoInfo is DelegateCallInfo);
+			return ComputeCalleesForDelegateNode((DelegateCallInfo)invoInfo, codeProvider);
+		}
 
 		internal ISet<MethodDescriptor> ComputeCalleesForCallNode(MethodCallInfo callInfo, IProjectCodeProvider codeProvider)
 		{
@@ -715,38 +771,38 @@ namespace OrleansClient
 		}
 
 		internal ISet<MethodDescriptor> ComputeCalleesForDelegateNode(DelegateCallInfo callInfo, IProjectCodeProvider codeProvider)
-        {
-            return GetDelegateCallees(callInfo.Delegate, codeProvider);
-        }
+		{
+			return GetDelegateCallees(callInfo.Delegate, codeProvider);
+		}
 
-        private ISet<MethodDescriptor> GetDelegateCallees(VariableNode delegateNode, IProjectCodeProvider codeProvider)
-        {
-            return GetDelegateCalleesAsync(delegateNode, codeProvider).Result;
+		private ISet<MethodDescriptor> GetDelegateCallees(VariableNode delegateNode, IProjectCodeProvider codeProvider)
+		{
+			return GetDelegateCalleesAsync(delegateNode, codeProvider).Result;
 
-            //var callees = new HashSet<MethodDescriptor>();
-            //var typeDescriptors = this.GetTypes(delegateNode);
-            //foreach (var delegateInstance in this.GetDelegates(delegateNode))
-            //{
-            //    if (typeDescriptors.Count() > 0)
-            //    {
-            //        foreach (var typeDescriptor in typeDescriptors)
-            //        {
-            //            // TO-DO!!!
-            //            // Ugly: I'll fix it
-            //            //var aMethod = delegateInstance.FindMethodImplementation(type);
-            //            var aMethod = codeProvider.FindMethodImplementation(delegateInstance, typeDescriptor);
-            //            callees.Add(aMethod);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        // if Count is 0, it is a delegate that do not came form an instance variable
-            //        callees.Add(delegateInstance);
-            //    }
-            //}
+			//var callees = new HashSet<MethodDescriptor>();
+			//var typeDescriptors = this.GetTypes(delegateNode);
+			//foreach (var delegateInstance in this.GetDelegates(delegateNode))
+			//{
+			//    if (typeDescriptors.Count() > 0)
+			//    {
+			//        foreach (var typeDescriptor in typeDescriptors)
+			//        {
+			//            // TO-DO!!!
+			//            // Ugly: I'll fix it
+			//            //var aMethod = delegateInstance.FindMethodImplementation(type);
+			//            var aMethod = codeProvider.FindMethodImplementation(delegateInstance, typeDescriptor);
+			//            callees.Add(aMethod);
+			//        }
+			//    }
+			//    else
+			//    {
+			//        // if Count is 0, it is a delegate that do not came form an instance variable
+			//        callees.Add(delegateInstance);
+			//    }
+			//}
 
-            //return callees;
-        }
+			//return callees;
+		}
 
 		public void Save(string path)
 		{

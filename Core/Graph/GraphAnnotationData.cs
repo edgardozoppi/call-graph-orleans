@@ -8,10 +8,11 @@ namespace OrleansClient
 {
 	/// <summary>
 	/// This class represents the data that a node in the PropGraph can carry
-	/// Types: Concrete Types (we store the possible types per incoming edge)
-	/// DeletedTypes: Is the set of concrete types we want to delete. Used to propagate a removal of a type or an edge in the graph
+	/// Types: concrete Types (we store the possible types per incoming edge)
+	/// AddedTypes: is the set of concrete types we have added. Used to propagate an addition of a type or an edge in the graph
+	/// DeletedTypes: is the set of concrete types we have deleted. Used to propagate a removal of a type or an edge in the graph
 	/// Node: is tne node value (the graph from Nuri uses numbers for vertex)
-	/// CallNode: Some node may include information about an invocation (the call nodes)
+	/// CallNode: some node may include information about an invocation (the call nodes)
 	/// </summary>
 	[Serializable]
 	internal class GraphNodeAnnotationData
@@ -19,6 +20,7 @@ namespace OrleansClient
 		// Stores the possible types per incoming edge (edge/caller context/callee).
 		private IDictionary<string, ISet<TypeDescriptor>> _types;
 
+		internal ISet<TypeDescriptor> AddedTypes { get; private set; }
 		internal ISet<TypeDescriptor> DeletedTypes { get; private set; }
 		internal ISet<MethodDescriptor> Delegates { get; set; }
 		internal PropGraphNodeDescriptor Node { get; set; }
@@ -31,6 +33,7 @@ namespace OrleansClient
 
 			this.Node = node;
 			this.HasRetValue = false;
+			this.AddedTypes = new HashSet<TypeDescriptor>();
 			this.DeletedTypes = new HashSet<TypeDescriptor>();
 			this.Delegates = new HashSet<MethodDescriptor>();			
 		}

@@ -48,13 +48,16 @@ namespace OrleansClient
 				throw new Exception(msg);
 			}
 
-			var ts = GetTypes(n);
-			var oldCount = ts.Count;
+			var newTypes = GetAddedTypes(n);
+			if (newTypes.IsSupersetOf(src))
+				return false;
+
+			var oldTypes = GetTypes(n);
 			var compatibleTypes = new HashSet<TypeDescriptor>();
 
 			foreach (var t in src)
 			{
-				if (!ts.Contains(t))
+				if (!oldTypes.Contains(t))
 				{
 					var isAsig = await IsAssignableAsync(t, n);
 
@@ -66,14 +69,18 @@ namespace OrleansClient
 			}
 
 			AddTypes(n, edge, compatibleTypes);
-			ts = GetTypes(n);
-			var newCount = ts.Count;
-			if (newCount > oldCount)
+			newTypes = GetTypes(n);
+			newTypes = new HashSet<TypeDescriptor>(newTypes);
+
+			if (newTypes.Count > oldTypes.Count)
 			{
-				this.UpdateCount += newCount - oldCount;
+				newTypes.ExceptWith(oldTypes);
+				this.UpdateCount += newTypes.Count;
 				this.AddToWorkList(n);
+				this.AddTypes(n, newTypes);
 				return true;
 			}
+
 			return false;
 		}
 
@@ -133,7 +140,7 @@ namespace OrleansClient
 				}
 
 				var v = GetVertex(analysisNode);
-				var types = GetTypes(analysisNode);
+				var types = GetAddedTypes(analysisNode);
 
 				foreach (var v1 in graph.GetTargets(v.Id))
 				{
