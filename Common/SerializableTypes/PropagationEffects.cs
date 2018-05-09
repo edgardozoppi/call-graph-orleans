@@ -7,6 +7,16 @@ namespace Common
 	[Serializable]
 	public class PropagationEffects
 	{
+		public PropagationKind Kind { get; set; }
+		public string SiloAddress { get; set; }
+		public ISet<CallInfo> CalleesInfo { get; set; }
+		public ISet<ReturnInfo> CallersInfo { get; set; }
+		public bool ResultChanged { get; set; }
+		//public bool MoreEffectsToFetch { get; set; }
+		//public bool MethodEntityReady { get; set; }
+		public int NumberOfUpdates { get; set; }
+		public int WorkListInitialSize { get; set; }
+
 		public PropagationEffects(IEnumerable<CallInfo> calleesInfo, bool resultChanged, PropagationKind kind = PropagationKind.ADD_TYPES, int updates = 0, int worklistInitialSize = 0)
 		{
             this.CallersInfo = new HashSet<ReturnInfo>();
@@ -21,9 +31,9 @@ namespace Common
 
 		public PropagationEffects(IEnumerable<ReturnInfo> callersInfo)
 		{
+			this.CallersInfo = new HashSet<ReturnInfo>(callersInfo);
 			this.CalleesInfo = new HashSet<CallInfo>();
 			this.ResultChanged = true;
-			this.CallersInfo = new HashSet<ReturnInfo>(callersInfo);
             //this.MoreEffectsToFetch = false;
             //this.MethodEntityReady = true;
         }
@@ -33,15 +43,5 @@ namespace Common
             //this.MoreEffectsToFetch = false;
             //this.MethodEntityReady = false;
         }
-
-		public PropagationKind Kind { get; set; }
-		public string SiloAddress { get; set; }
-        public ISet<CallInfo> CalleesInfo { get; set; }
-		public bool ResultChanged { get; set; }
-        public ISet<ReturnInfo> CallersInfo { get; set; }
-        //public bool MoreEffectsToFetch { get; set; }
-        //public bool MethodEntityReady { get; set; }
-        public int NumberOfUpdates { get; set; }
-        public int WorkListInitialSize { get; set; }
     }
 }

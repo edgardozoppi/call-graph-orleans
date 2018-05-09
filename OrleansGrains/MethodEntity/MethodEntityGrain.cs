@@ -350,9 +350,23 @@ namespace OrleansClient.Analysis
 			{
 				var calleeInfo = effects.CalleesInfo.Single();
 
-				if (calleeInfo.PossibleCallees != null)
+				// TODO: Fix this splitting code to work well with the latest propagation effects changes:
+				// - ModifiedCallees must go together with ArgumentsAllTypes
+				// - AllCallees must go together with ArgumentsModifiedTypes
+
+				if (calleeInfo.ModifiedCallees != null)
 				{
-					maxCalleesCount = Math.Min(calleeInfo.PossibleCallees.Count, maxCalleesCount);
+					maxCalleesCount = Math.Min(calleeInfo.ModifiedCallees.Count, maxCalleesCount);
+					var newMaxCalleesCount = (maxCalleesCount / 2) + (maxCalleesCount % 2);
+
+					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
+
+					await this.SplitAndEnqueueCalleeEffectsAsync(effects, maxCallSitesCount, maxCallersCount, newMaxCalleesCount);
+				}
+
+				if (calleeInfo.AllCallees != null)
+				{
+					maxCalleesCount = Math.Min(calleeInfo.AllCallees.Count, maxCalleesCount);
 					var newMaxCalleesCount = (maxCalleesCount / 2) + (maxCalleesCount % 2);
 
 					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
@@ -371,8 +385,8 @@ namespace OrleansClient.Analysis
 
 			foreach (var calleeInfo in effects.CalleesInfo)
 			{
-				callees += calleeInfo.PossibleCallees.Count;
-				arguments += calleeInfo.ArgumentsPossibleTypes.Sum(ts => ts.Count);
+				callees += calleeInfo.ModifiedCallees.Count + calleeInfo.AllCallees.Count;
+				arguments += calleeInfo.ArgumentsModifiedTypes.Sum(ts => ts.Count) + calleeInfo.ArgumentsAllTypes.Sum(ts => ts.Count);
 			}
 
 			var result = string.Format("invocations = {0}, callees = {1}, argument types = {2}, callers = {3}", invocations, callees, arguments, callers);
@@ -472,14 +486,17 @@ namespace OrleansClient.Analysis
 
 			foreach (var calleeInfo in calleesInfo)
 			{
-				var possibleCallees = calleeInfo.PossibleCallees.ToList();
+				// TODO: Fix this splitting code to work well with the latest propagation effects changes:
+				// - ModifiedCallees must go together with ArgumentsAllTypes
+				// - AllCallees must go together with ArgumentsModifiedTypes
+				var possibleCallees = calleeInfo.AllCallees.ToList();
 				var count = possibleCallees.Count;
 				var index = 0;
 
 				while (count > maxCount)
 				{
 					var callees = possibleCallees.GetRange(index, maxCount);
-					var message = calleeInfo.Clone(callees);
+					var message = calleeInfo.Clone(calleeInfo.ModifiedCallees, callees);
 
 					result.Add(message);
 
@@ -490,7 +507,7 @@ namespace OrleansClient.Analysis
 				if (count > 0)
 				{
 					var callees = possibleCallees.GetRange(index, count);
-					var message = calleeInfo.Clone(callees);
+					var message = calleeInfo.Clone(calleeInfo.ModifiedCallees, callees);
 
 					result.Add(message);
 				}

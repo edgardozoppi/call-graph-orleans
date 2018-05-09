@@ -297,11 +297,13 @@ namespace OrleansClient
 			}
 			else if (!callInfo.Method.IsVirtual)
 			{
-				// Non-virtual method call
+				// Non-virtual instance method call
 				calleesForNode.Add(callInfo.Method);
 			}
 			else if (callInfo.Receiver != null)
 			{
+				// Virtual instance method call
+
 				// I replaced the invocation for a local call to mark that functionality is missing
 				//var callees = GetPotentialTypes(this.Receiver, propGraph)
 				//    .Select(t => this.Callee.FindMethodImplementation(t));

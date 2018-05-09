@@ -152,7 +152,8 @@ namespace OrleansClient.Analysis
 		{
 			await this.PopulateCalleesInfo(propagationEffects.CalleesInfo, propKind);
 
-			if (this.methodEntity.ReturnVariable != null || propKind == PropagationKind.REMOVE_TYPES)
+			//if (this.methodEntity.ReturnVariable != null || propKind == PropagationKind.REMOVE_TYPES)
+			if (this.methodEntity.ReturnVariable != null)
 			{
 				if (!propagationEffects.ResultChanged && this.newCallContext != null)
 				{
@@ -172,41 +173,74 @@ namespace OrleansClient.Analysis
 				// We need a different way to update this info
 				//calleeInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
 
-				// TODO: This is because of the refactor
+				ISet<ResolvedCallee> modifiedCallees = null;
+				ISet<ResolvedCallee> allCallees = null;
+
 				if (calleeInfo is MethodCallInfo)
 				{
 					var methodCallInfo = calleeInfo as MethodCallInfo;
-					//methodCallInfo.ReceiverPossibleTypes = GetTypes(methodCallInfo.Receiver);
-					methodCallInfo.PossibleCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method, codeProvider);
+					modifiedCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method, propKind);
+					allCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method);
 				}
 				else if (calleeInfo is DelegateCallInfo)
 				{
 					var delegateCalleeInfo = calleeInfo as DelegateCallInfo;
-					//delegateCalleeInfo.ReceiverPossibleTypes = GetTypes(delegateCalleeInfo.Delegate);
-					delegateCalleeInfo.PossibleCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate, codeProvider);
+					modifiedCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate, propKind);
+					allCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate);
 				}
 
-				calleeInfo.ArgumentsPossibleTypes.Clear();
+				//calleeInfo.ArgumentsModifiedTypes.Clear();
+				//calleeInfo.ArgumentsAllTypes.Clear();
 
-				for (int i = 0; i < calleeInfo.Arguments.Count; i++)
+				var argumentsModifiedTypes = new List<ISet<TypeDescriptor>>();
+				var argumentsAllTypes = new List<ISet<TypeDescriptor>>();
+
+				for (var i = 0; i < calleeInfo.Arguments.Count; i++)
 				{
 					var arg = calleeInfo.Arguments[i];
-					var types = GetTypes(arg, propKind);
-					var potentialTypes = new HashSet<TypeDescriptor>(types);
-					calleeInfo.ArgumentsPossibleTypes.Add(potentialTypes);
+
+					var types = GetModifiedTypes(arg, propKind);
+					var modifiedTypes = new HashSet<TypeDescriptor>(types);
+					argumentsModifiedTypes.Add(modifiedTypes);
+
+					types = GetAllTypes(arg);
+					var allTypes = new HashSet<TypeDescriptor>(types);
+					argumentsAllTypes.Add(allTypes);
+				}
+
+				calleeInfo.ModifiedCallees = modifiedCallees;
+				calleeInfo.ArgumentsModifiedTypes = argumentsModifiedTypes;
+				calleeInfo.AllCallees = null;
+				calleeInfo.ArgumentsAllTypes = null;
+
+				var hasModifiedCallees = modifiedCallees.Any(rc => !rc.IsStatic);
+				var hasArgumentsModifiedTypes = argumentsModifiedTypes.Any(ts => ts.Any());
+
+				if (hasModifiedCallees)
+				{
+					calleeInfo.ArgumentsAllTypes = argumentsAllTypes;
+				}
+
+				if (hasArgumentsModifiedTypes)
+				{
+					allCallees.ExceptWith(modifiedCallees);
+					calleeInfo.AllCallees = allCallees;
 				}
 			}
 		}
 
-		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, PropagationKind propKind)
+		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, PropagationKind? propKind = null)
 		{
 			if (this.newCallContext != null)
 			{
-				PopulateCallersInfo(callersInfo, this.newCallContext, propKind);
+				// New caller context found, send all returned types.
+				PopulateCallersInfo(callersInfo, this.newCallContext);
 				this.newCallContext = null;
 			}
 			else
 			{
+				// Same caller contexts, send only added/deleted returned types
+				// according to propKind or all returned types if propKind is null.
 				foreach (var callerContext in this.methodEntity.Callers)
 				{
 					PopulateCallersInfo(callersInfo, callerContext, propKind);
@@ -214,10 +248,19 @@ namespace OrleansClient.Analysis
 			}
 		}
 
-		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, CallContext callerContext, PropagationKind propKind)
+		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, CallContext callerContext, PropagationKind? propKind = null)
 		{
 			var returnInfo = new ReturnInfo(this.methodEntity.MethodDescriptor, callerContext);
-			var types = GetTypes(this.methodEntity.ReturnVariable, propKind);
+			ISet<TypeDescriptor> types;
+
+			if (propKind.HasValue)
+			{
+				types = GetModifiedTypes(this.methodEntity.ReturnVariable, propKind.Value);
+			}
+			else
+			{
+				types = GetAllTypes(this.methodEntity.ReturnVariable);
+			}
 
 			returnInfo.ResultPossibleTypes.UnionWith(types);
 			//returnInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
@@ -251,7 +294,6 @@ namespace OrleansClient.Analysis
 
 				if (parameterNode != null)
 				{
-					//TODO: Hack. Remove later!
 					var argumentPossibleTypes = new HashSet<TypeDescriptor>();
 
 					if (i < callMessageInfo.ArgumentsPossibleTypes.Count)
@@ -268,11 +310,20 @@ namespace OrleansClient.Analysis
 			}
 
 			var context = new CallContext(callMessageInfo.Caller, callMessageInfo.LHS, callMessageInfo.CallNode);
-			var isNewContext = this.methodEntity.AddToCallers(context);
 
-			if (isNewContext)
+			if (callMessageInfo.PropagationKind == PropagationKind.ADD_TYPES)
 			{
-				this.newCallContext = context;
+				var isNewContext = this.methodEntity.AddToCallers(context);
+
+				if (isNewContext)
+				{
+					this.newCallContext = context;
+				}
+			}
+			else if (callMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES &&
+				callMessageInfo.UnregisterCaller)
+			{
+				this.methodEntity.RemoveFromCallers(context);
 			}
 
 			var effects = await InternalPropagateAsync(callMessageInfo.PropagationKind);
@@ -343,7 +394,7 @@ namespace OrleansClient.Analysis
 			return Task.FromResult(methodEntity.PropGraph.CallNodes.Count());
 		}
 
-		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForMethodCallAsync(PropGraphNodeDescriptor receiver, MethodDescriptor method, IProjectCodeProvider codeProvider)
+		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForMethodCallAsync(PropGraphNodeDescriptor receiver, MethodDescriptor method, PropagationKind? propKind = null)
 		{
 			var possibleCallees = new HashSet<ResolvedCallee>();
 
@@ -362,8 +413,17 @@ namespace OrleansClient.Analysis
 			}
 			else if (!method.IsVirtual)
 			{
-				// Non-virtual method call
-				var receiverPossibleTypes = this.GetAllTypes(receiver);
+				// Non-virtual instance method call
+				ISet<TypeDescriptor> receiverPossibleTypes;
+
+				if (propKind.HasValue)
+				{
+					receiverPossibleTypes = this.GetModifiedTypes(receiver, propKind.Value);
+				}
+				else
+				{
+					receiverPossibleTypes = this.GetAllTypes(receiver);
+				}
 
 				if (receiverPossibleTypes.Count > 0)
 				{
@@ -377,7 +437,7 @@ namespace OrleansClient.Analysis
 			}
 			else
 			{
-				// Instance method call
+				// Virtual instance method call
 
 				//// I need to compute all the callees
 				//// In case of a deletion we can discard the deleted callee
@@ -401,7 +461,16 @@ namespace OrleansClient.Analysis
 				//	}
 				//}
 
-				var receiverPossibleTypes = this.GetAllTypes(receiver);
+				ISet<TypeDescriptor> receiverPossibleTypes;
+
+				if (propKind.HasValue)
+				{
+					receiverPossibleTypes = this.GetModifiedTypes(receiver, propKind.Value);
+				}
+				else
+				{
+					receiverPossibleTypes = this.GetAllTypes(receiver);
+				}
 
 				if (receiverPossibleTypes.Count > 0)
 				{
@@ -427,7 +496,7 @@ namespace OrleansClient.Analysis
 			return possibleCallees;
 		}
 
-		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForDelegateCallAsync(DelegateVariableNode @delegate, IProjectCodeProvider codeProvider)
+		private async Task<ISet<ResolvedCallee>> GetPossibleCalleesForDelegateCallAsync(DelegateVariableNode @delegate, PropagationKind? propKind = null)
 		{
 			var possibleCallees = new HashSet<ResolvedCallee>();
 			var possibleDelegateMethods = this.GetPossibleMethodsForDelegate(@delegate);
@@ -444,7 +513,16 @@ namespace OrleansClient.Analysis
 				else
 				{
 					// Instance method call
-					var receiverPossibleTypes = this.GetAllTypes(@delegate);
+					ISet<TypeDescriptor> receiverPossibleTypes;
+
+					if (propKind.HasValue)
+					{
+						receiverPossibleTypes = this.GetModifiedTypes(@delegate, propKind.Value);
+					}
+					else
+					{
+						receiverPossibleTypes = this.GetAllTypes(@delegate);
+					}
 
 					if (receiverPossibleTypes.Count > 0)
 					{
@@ -478,22 +556,22 @@ namespace OrleansClient.Analysis
 
 		private ISet<TypeDescriptor> GetAllTypes(PropGraphNodeDescriptor node)
 		{
-			var result = new HashSet<TypeDescriptor>();
-			var types = GetTypes(node);
-			var deletedTypes = GetDeletedTypes(node);
-
-			result.UnionWith(types);
-			result.UnionWith(deletedTypes);
-
-			return result;
+			if (node != null)
+			{
+				return this.methodEntity.PropGraph.GetTypes(node);
+			}
+			else
+			{
+				return new HashSet<TypeDescriptor>();
+			}
 		}
 
-		private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor node, PropagationKind prop)
+		private ISet<TypeDescriptor> GetModifiedTypes(PropGraphNodeDescriptor node, PropagationKind prop)
 		{
 			switch (prop)
 			{
 				case PropagationKind.ADD_TYPES:
-					return GetTypes(node);
+					return GetAddedTypes(node);
 				case PropagationKind.REMOVE_TYPES:
 					return GetDeletedTypes(node);
 				default:
@@ -502,11 +580,11 @@ namespace OrleansClient.Analysis
 			}
 		}
 
-		private ISet<TypeDescriptor> GetTypes(PropGraphNodeDescriptor node)
+		private ISet<TypeDescriptor> GetAddedTypes(PropGraphNodeDescriptor node)
 		{
 			if (node != null)
 			{
-				return this.methodEntity.PropGraph.GetTypes(node);
+				return this.methodEntity.PropGraph.GetAddedTypes(node);
 			}
 			else
 			{
@@ -621,7 +699,7 @@ namespace OrleansClient.Analysis
 			{
 				foreach (var callNode in anonymousEntity.PropGraph.CallNodes)
 				{
-					var invocationInfo = Roslyn.CodeGraphHelper.GetMethodInvocationInfo(anonymousEntity.MethodDescriptor, callNode);
+					var invocationInfo = CodeGraphHelper.GetMethodInvocationInfo(anonymousEntity.MethodDescriptor, callNode);
 					invocationInfo.range = CodeGraphHelper.GetAbsoluteRange(invocationInfo.range, anonymousEntity.DeclarationInfo.range);
 					result.Add(invocationInfo);
 				}
@@ -634,17 +712,11 @@ namespace OrleansClient.Analysis
 		{
 			var calleesInfo = from callNode in this.methodEntity.PropGraph.CallNodes
 							  let calleeInfo = this.methodEntity.PropGraph.GetInvocationInfo(callNode)
-							  select calleeInfo.Clone(calleeInfo.PossibleCallees);
+							  select calleeInfo.Clone(calleeInfo.ModifiedCallees, calleeInfo.AllCallees);
 			//select calleeInfo;
 
 			var propagationEffects = new PropagationEffects(calleesInfo, true, PropagationKind.REMOVE_TYPES);
-
-			//// The use of ADD_TYPES here is not an error!
-			//await this.PopulatePropagationEffectsInfo(propagationEffects, PropagationKind.ADD_TYPES);
-			//return propagationEffects;
-
-			// The use of ADD_TYPES here is not an error!
-			this.PopulateCallersInfo(propagationEffects.CallersInfo, PropagationKind.ADD_TYPES);
+			this.PopulateCallersInfo(propagationEffects.CallersInfo);
 			return Task.FromResult(propagationEffects);
 		}
 

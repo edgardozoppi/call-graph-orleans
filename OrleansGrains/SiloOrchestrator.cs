@@ -159,11 +159,23 @@ namespace OrleansClient.Analysis
 		private async Task DispatchCallMessageForMethodCallAsync(MethodCallInfo methodCallInfo, PropagationKind propKind)
 		{
 			var tasks = new List<Task>();
+			var unregisterCaller = propKind == PropagationKind.REMOVE_TYPES;
 
-			foreach (var callee in methodCallInfo.PossibleCallees)
+			foreach (var callee in methodCallInfo.ModifiedCallees)
 			{
-				var task = this.CreateAndSendCallMessageAsync(methodCallInfo, callee, propKind);
+				var task = this.CreateAndSendCallMessageAsync(methodCallInfo, callee, methodCallInfo.ArgumentsAllTypes, unregisterCaller, propKind);
 				tasks.Add(task);
+			}
+
+			if (methodCallInfo.AllCallees != null)
+			{
+				unregisterCaller = false;
+
+				foreach (var callee in methodCallInfo.AllCallees)
+				{
+					var task = this.CreateAndSendCallMessageAsync(methodCallInfo, callee, methodCallInfo.ArgumentsModifiedTypes, unregisterCaller, propKind);
+					tasks.Add(task);
+				}
 			}
 
 			await Task.WhenAll(tasks);
@@ -172,20 +184,32 @@ namespace OrleansClient.Analysis
 		private  async Task DispatchCallMessageForDelegateCallAsync(DelegateCallInfo delegateCallInfo, PropagationKind propKind)
 		{
 			var tasks = new List<Task>();
+			var unregisterCaller = propKind == PropagationKind.REMOVE_TYPES;
 
-			foreach (var callee in delegateCallInfo.PossibleCallees)
+			foreach (var callee in delegateCallInfo.ModifiedCallees)
 			{
-				var task = this.CreateAndSendCallMessageAsync(delegateCallInfo, callee, propKind);
+				var task = this.CreateAndSendCallMessageAsync(delegateCallInfo, callee, delegateCallInfo.ArgumentsAllTypes, unregisterCaller, propKind);
 				tasks.Add(task);
+			}
+
+			if (delegateCallInfo.AllCallees != null)
+			{
+				unregisterCaller = false;
+
+				foreach (var callee in delegateCallInfo.AllCallees)
+				{
+					var task = this.CreateAndSendCallMessageAsync(delegateCallInfo, callee, delegateCallInfo.ArgumentsModifiedTypes, unregisterCaller, propKind);
+					tasks.Add(task);
+				}
 			}
 
 			await Task.WhenAll(tasks);
 		}
 
-		private async Task CreateAndSendCallMessageAsync(CallInfo callInfo, ResolvedCallee callee, PropagationKind propKind)
+		private async Task CreateAndSendCallMessageAsync(CallInfo callInfo, ResolvedCallee callee, IList<ISet<TypeDescriptor>> argumentsTypes, bool unregisterCaller, PropagationKind propKind)
 		{
 			var callMessageInfo = new CallMessageInfo(callInfo.Caller, callee.Method, callee.ReceiverType,
-				callInfo.ArgumentsPossibleTypes, callInfo.CallNode, callInfo.LHS, propKind);
+				argumentsTypes, callInfo.CallNode, callInfo.LHS, unregisterCaller, propKind);
 
 			var source = new MethodEntityDescriptor(callInfo.Caller);
 			var callerMessage = new CallerMessage(source, callMessageInfo);

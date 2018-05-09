@@ -71,21 +71,34 @@ namespace OrleansClient.Analysis
 		private async Task DispatchCallMessageAsync(CallInfo callInfo, PropagationKind propKind)
 		{
 			var tasks = new List<Task>();
+			var unregisterCaller = propKind == PropagationKind.REMOVE_TYPES;
 
-			foreach (var callee in callInfo.PossibleCallees)
+			foreach (var callee in callInfo.ModifiedCallees)
 			{
-				var task = this.CreateAndSendCallMessageAsync(callInfo, callee, propKind);
+				var task = this.CreateAndSendCallMessageAsync(callInfo, callee, callInfo.ArgumentsAllTypes, unregisterCaller, propKind);
 				//await task;
 				tasks.Add(task);
+			}
+
+			if (callInfo.AllCallees != null)
+			{
+				unregisterCaller = false;
+
+				foreach (var callee in callInfo.AllCallees)
+				{
+					var task = this.CreateAndSendCallMessageAsync(callInfo, callee, callInfo.ArgumentsModifiedTypes, unregisterCaller, propKind);
+					//await task;
+					tasks.Add(task);
+				}
 			}
 
 			await Task.WhenAll(tasks);
 		}
 
-		private Task CreateAndSendCallMessageAsync(CallInfo callInfo, ResolvedCallee callee, PropagationKind propKind)
+		private Task CreateAndSendCallMessageAsync(CallInfo callInfo, ResolvedCallee callee, IList<ISet<TypeDescriptor>> argumentsTypes, bool unregisterCaller, PropagationKind propKind)
 		{
 			var callMessageInfo = new CallMessageInfo(callInfo.Caller, callee.Method, callee.ReceiverType,
-				callInfo.ArgumentsPossibleTypes, callInfo.CallNode, callInfo.LHS, propKind);
+				argumentsTypes, callInfo.CallNode, callInfo.LHS, unregisterCaller, propKind);
 
 			var source = new MethodEntityDescriptor(callInfo.Caller);
 			var callerMessage = new CallerMessage(source, callMessageInfo);

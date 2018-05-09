@@ -125,6 +125,44 @@ namespace Common
 		{
 			this.Method = method;
 		}
+
+		public bool IsStatic
+		{
+			get { return this.ReceiverType == null; }
+		}
+
+		public override int GetHashCode()
+		{
+			var result = this.Method.GetHashCode();
+
+			if (!this.IsStatic)
+			{
+				result = result ^ this.ReceiverType.GetHashCode();
+			}
+
+			return result;
+		}
+
+		public override bool Equals(object obj)
+		{
+			var other = obj as ResolvedCallee;
+			return other != null &&
+				((this.IsStatic && other.IsStatic) ||
+				(!this.IsStatic && !other.IsStatic && this.ReceiverType.Equals(other.ReceiverType))) &&
+				this.Method.Equals(other.Method);
+		}
+
+		public override string ToString()
+		{
+			var receiverName = "static ";
+
+			if (!this.IsStatic)
+			{
+				receiverName = string.Format("{0}::", this.ReceiverType.ClassName);
+			}
+
+			return string.Format("{0}{1}", receiverName, this.Method.Name);
+		}
 	}
 
 	[Serializable]

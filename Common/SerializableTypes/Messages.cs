@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the MIT License.  See License.txt in the project root for license information.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 
 namespace Common
 {
@@ -17,13 +16,14 @@ namespace Common
 		public IList<ISet<TypeDescriptor>> ArgumentsPossibleTypes { get; private set; }
 		public TypeDescriptor ReceiverType { get; private set; }
 		public VariableNode LHS { get; private set; }
+		public bool UnregisterCaller { get; private set; }
 		public PropagationKind PropagationKind { get; private set; }
 
 		public CallMessageInfo() { }
 
         public CallMessageInfo(MethodDescriptor caller, MethodDescriptor callee, TypeDescriptor receiverType,
 			IList<ISet<TypeDescriptor>> argumentsPossibleTypes, AnalysisCallNode callNode, VariableNode lhs,
-			PropagationKind propKind)
+			bool unregisterCaller, PropagationKind propKind)
 		{
             this.Caller = caller;
             this.Callee = callee;
@@ -32,6 +32,7 @@ namespace Common
             this.LHS = lhs;
             this.PropagationKind = propKind;
             this.CallNode = callNode;
+			this.UnregisterCaller = unregisterCaller;
         }
 
 		public override string ToString()
