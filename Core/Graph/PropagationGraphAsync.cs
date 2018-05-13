@@ -112,7 +112,7 @@ namespace OrleansClient
 			return res;
 		}
 
-		internal async Task<PropagationEffects> PropagateAsync(IProjectCodeProvider codeProvider)
+		internal async Task<PropagationResult> PropagateAsync(IProjectCodeProvider codeProvider)
 		{
 			this.UpdateCount = 0;
 			this.WorklistSize = workList.Count;
@@ -120,7 +120,7 @@ namespace OrleansClient
 			//Logger.Log("Add Working Set size {0}", this.workList.Count);
 			this.codeProvider = codeProvider;
 
-			var calls = new HashSet<CallInfo>();
+			var calls = new HashSet<CallNode>();
 			var retModified = false;
 
 			while (workList.Count > 0)
@@ -131,7 +131,7 @@ namespace OrleansClient
 				if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
 				{
 					//this.UpdateCount++;
-					calls.Add(GetInvocationInfo(analysisNode));
+					calls.Add(GetInvocationNode(analysisNode));
 					continue;
 				}
 				if (IsRetNode(analysisNode))
@@ -148,7 +148,7 @@ namespace OrleansClient
 
 					if (IsCallNode(n1) || IsDelegateCallNode(n1))
 					{
-						calls.Add(GetInvocationInfo(n1));
+						calls.Add(GetInvocationNode(n1));
 					}
 					else
 					{
@@ -163,7 +163,7 @@ namespace OrleansClient
 			}
 
 			this.HasBeenPropagated = true;
-			return new PropagationEffects(calls, retModified, PropagationKind.ADD_TYPES, this.UpdateCount, this.WorklistSize);
+			return new PropagationResult(PropagationKind.ADD_TYPES, retModified, calls);
 		}
 
 		internal void ResetUpdateCount()
@@ -171,12 +171,12 @@ namespace OrleansClient
 			this.UpdateCount = 0;
 		}
 
-		internal Task<PropagationEffects> PropagateDeletionAsync(IProjectCodeProvider codeProvider)
+		internal Task<PropagationResult> PropagateDeletionAsync(IProjectCodeProvider codeProvider)
 		{
 			//Logger.Log("Delete Working Set size {0}", this.deletionWorkList.Count);
 			this.codeProvider = codeProvider;
 
-			var calls = new HashSet<CallInfo>();
+			var calls = new HashSet<CallNode>();
 			var retModified = false;
 
 			while (deletionWorkList.Count > 0)
@@ -186,7 +186,7 @@ namespace OrleansClient
 
 				if (IsCallNode(analysisNode) || IsDelegateCallNode(analysisNode))
 				{
-					calls.Add(GetInvocationInfo(analysisNode));
+					calls.Add(GetInvocationNode(analysisNode));
 					continue;
 				}
 				if (IsRetNode(analysisNode))
@@ -203,7 +203,7 @@ namespace OrleansClient
 
 					if (IsCallNode(n1) || IsDelegateCallNode(n1))
 					{
-						calls.Add(GetInvocationInfo(n1));
+						calls.Add(GetInvocationNode(n1));
 					}
 					else
 					{
@@ -220,7 +220,7 @@ namespace OrleansClient
 				}
 			}
 
-			return Task.FromResult(new PropagationEffects(calls, retModified, PropagationKind.REMOVE_TYPES));
+			return Task.FromResult(new PropagationResult(PropagationKind.REMOVE_TYPES, retModified, calls));
 		}
 
 		// DIEGO 

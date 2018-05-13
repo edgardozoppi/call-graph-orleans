@@ -11,6 +11,20 @@ using Common;
 
 namespace OrleansClient
 {
+	internal class PropagationResult
+	{
+		public PropagationKind Kind { get; private set; }
+		public ISet<CallNode> ModifiedCallNodes { get; private set; }
+		public bool ResultChanged { get; private set; }
+
+		public PropagationResult(PropagationKind kind, bool resultChanged, ISet<CallNode> modifiedCallNodes)
+		{
+			this.Kind = kind;
+			this.ResultChanged = resultChanged;
+			this.ModifiedCallNodes = new HashSet<CallNode>(modifiedCallNodes);
+		}
+	}
+
 	/// <summary>
 	/// Propagation graph: is the main data structure of the algorithm
 	/// The basic idea is that concrete types flow from the graph nodes which represent proggram expressions (variables, fields, invocaitons)
@@ -87,7 +101,7 @@ namespace OrleansClient
 			return node;
 		}
 
-		private GraphNode<GraphNodeAnnotationData> AddVertex(AnalysisCallNode m, CallInfo callNode)
+		private GraphNode<GraphNodeAnnotationData> AddVertex(AnalysisCallNode m, CallNode callNode)
 		{
 			Contract.Assert(callNode != null);
 			var v = AddVertex(m);
@@ -132,7 +146,7 @@ namespace OrleansClient
 			v.Value.Delegates.Add(methodDescriptor);
 		}
 
-		public void AddCall(CallInfo call, AnalysisCallNode callNode)
+		public void AddCall(CallNode call, AnalysisCallNode callNode)
 		{
 			var v = AddVertex(callNode, call);
 			callNodes.Add(callNode);
@@ -159,7 +173,20 @@ namespace OrleansClient
 			if (vIndex.TryGetValue(callNode, out index))
 			{
 				var v = graph.GetNode(index);
-				//return (AInvocationExp<M, T, N>)v["Call"];
+				return v.Value.CallNode.ToCallInfo();
+			}
+
+			return null;
+		}
+
+		public CallNode GetInvocationNode(PropGraphNodeDescriptor callNode)
+		{
+			Contract.Requires(IsCallNode(callNode) || IsDelegateCallNode(callNode));
+			long index;
+
+			if (vIndex.TryGetValue(callNode, out index))
+			{
+				var v = graph.GetNode(index);
 				return v.Value.CallNode;
 			}
 
@@ -171,7 +198,7 @@ namespace OrleansClient
 		{
 			var index = vIndex[n];
 			var v = graph.GetNode(index);
-			return v.Value.CallNode != null && v.Value.CallNode is MethodCallInfo;
+			return v.Value.CallNode != null && v.Value.CallNode is MethodCallNode;
 		}
 
 		bool IsRetNode(PropGraphNodeDescriptor n)
@@ -186,7 +213,7 @@ namespace OrleansClient
 		{
 			var index = vIndex[n];
 			var v = graph.GetNode(index);
-			return v.Value.CallNode != null && v.Value.CallNode is DelegateCallInfo;
+			return v.Value.CallNode != null && v.Value.CallNode is DelegateCallNode;
 
 		}
 

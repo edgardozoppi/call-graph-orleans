@@ -118,7 +118,7 @@ namespace OrleansClient.Analysis
 			Contract.Requires(arguments != null);
 			//var argumentValues = arguments.Select(a => a!=null?worker.GetTypes(a):new HashSet<Type>());
 
-			var callExp = new MethodCallInfo(this.Method, callNode, callee, lhs, arguments, lhs, true);
+			var callExp = new MethodCallNode(this.Method, callNode, callee, lhs, arguments, lhs, true);
 
 			PropagationGraph.AddCall(callExp, callNode);
 			PropagationGraph.AddToWorkList(callNode);
@@ -151,7 +151,7 @@ namespace OrleansClient.Analysis
 			Contract.Requires(callNode != null);
 			Contract.Requires(arguments != null);
 
-			var callExp = new MethodCallInfo(this.Method, callNode, callee, arguments, lhs, false);
+			var callExp = new MethodCallNode(this.Method, callNode, callee, arguments, lhs, false);
 
 			RegisterInvocation(arguments, callNode, callExp);
 		}
@@ -164,7 +164,7 @@ namespace OrleansClient.Analysis
 			Contract.Requires(callNode != null);
 			Contract.Requires(arguments != null);
 
-			var callExp = new MethodCallInfo(this.Method, callNode, callee, receiver, arguments, lhs, false);
+			var callExp = new MethodCallNode(this.Method, callNode, callee, receiver, arguments, lhs, false);
 			RegisterInvocation(arguments, callNode, callExp);
 
 			if (receiver != null)
@@ -179,7 +179,7 @@ namespace OrleansClient.Analysis
 			Contract.Requires(callNode != null);
 			Contract.Requires(callee != null);
 
-			var callExp = new MethodCallInfo(this.Method, callNode, callee, receiver, arguments, lhs, false);
+			var callExp = new MethodCallNode(this.Method, callNode, callee, receiver, arguments, lhs, false);
 			RegisterInvocation(arguments, callNode, callExp);
 
 			if (receiver != null)
@@ -195,7 +195,7 @@ namespace OrleansClient.Analysis
 			Contract.Requires(arguments != null);
 			Contract.Requires(callee != null);
 
-			var callExp = new DelegateCallInfo(this.Method, callNode, delegateNode, arguments, lhs);
+			var callExp = new DelegateCallNode(this.Method, callNode, delegateNode, arguments, lhs);
 
 			// RegisterInvocation(arguments, delegateNode, callExp);
 			RegisterInvocation(arguments, callNode, callExp);
@@ -220,7 +220,7 @@ namespace OrleansClient.Analysis
 
 		private void RegisterInvocation(IList<PropGraphNodeDescriptor> arguments, 
                                         AnalysisCallNode invocationNode, 
-                                        CallInfo callExp)
+                                        CallNode callExp)
 		{
 			Contract.Requires(callExp != null);
 			Contract.Requires(arguments != null);
@@ -240,7 +240,7 @@ namespace OrleansClient.Analysis
 
 		public void RegisterCallLHS(AnalysisCallNode callNode, VariableNode lhs)
 		{
-			var callExp = PropagationGraph.GetInvocationInfo(callNode);
+			var callExp = PropagationGraph.GetInvocationNode(callNode);
 			callExp.LHS = lhs;
 		}
 		#endregion

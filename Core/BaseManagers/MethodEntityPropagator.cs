@@ -64,23 +64,25 @@ namespace OrleansClient.Analysis
 			//this.propagationEffectsToSend = new Queue<PropagationEffects>();
 		}
 
-		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
+		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode)
 		{
-			Contract.Requires(reWorkSet != null);
-
 			switch (propKind)
 			{
 				case PropagationKind.ADD_TYPES:
-					methodEntity.PropGraph.AddToWorkList(reWorkSet);
+					methodEntity.PropGraph.AddToWorkList(callNode);
 					break;
 
 				case PropagationKind.REMOVE_TYPES:
-					methodEntity.PropGraph.AddToDeletionWorkList(reWorkSet);
+					methodEntity.PropGraph.AddToDeletionWorkList(callNode);
 					break;
 
 				default:
 					throw new Exception("Unsupported propagation kind");
 			}
+
+			var node = methodEntity.PropGraph.GetInvocationNode(callNode);
+			var calleesToRemove = node.PossibleCallees.Where(c => c.Method.Equals(callee)).ToList();
+			node.PossibleCallees.ExceptWith(calleesToRemove);
 
 			return PropagateAsync(propKind);
 		}
@@ -97,23 +99,23 @@ namespace OrleansClient.Analysis
 			//Logger.Log("Propagating {0} to {1}", this.methodEntity.MethodDescriptor, propKind);
 
 			// var codeProvider = await ProjectGrainWrapper.CreateProjectGrainWrapperAsync(this.methodEntity.MethodDescriptor);
-			PropagationEffects propagationEffects = null;
+			PropagationResult propagationResult;
 
 			switch (propKind)
 			{
 				case PropagationKind.ADD_TYPES:
-					propagationEffects = await this.methodEntity.PropGraph.PropagateAsync(codeProvider);
+					propagationResult = await this.methodEntity.PropGraph.PropagateAsync(codeProvider);
 					break;
 
 				case PropagationKind.REMOVE_TYPES:
-					propagationEffects = await this.methodEntity.PropGraph.PropagateDeletionAsync(codeProvider);
+					propagationResult = await this.methodEntity.PropGraph.PropagateDeletionAsync(codeProvider);
 					break;
 
 				default:
 					throw new Exception("Unsupported propagation kind");
 			}
 
-			await this.PopulatePropagationEffectsInfo(propagationEffects, propKind);
+			var propagationEffects = await this.CreatePropagationEffects(propagationResult);
 
 			this.methodEntity.PropGraph.RemoveAddedTypes();
 			this.methodEntity.PropGraph.RemoveDeletedTypes();
@@ -148,58 +150,58 @@ namespace OrleansClient.Analysis
 			return propagationEffects;
 		}
 
-		private async Task PopulatePropagationEffectsInfo(PropagationEffects propagationEffects, PropagationKind propKind)
+		private async Task<PropagationEffects> CreatePropagationEffects(PropagationResult result)
 		{
-			await this.PopulateCalleesInfo(propagationEffects.CalleesInfo, propKind);
+			var effects = new PropagationEffects(result.Kind, result.ResultChanged);
 
-			//if (this.methodEntity.ReturnVariable != null || propKind == PropagationKind.REMOVE_TYPES)
-			if (this.methodEntity.ReturnVariable != null)
+			foreach (var callNode in result.ModifiedCallNodes)
 			{
-				if (!propagationEffects.ResultChanged && this.newCallContext != null)
+				ISet<ResolvedCallee> possibleCallees = null;
+
+				if (callNode is MethodCallNode)
 				{
-					propagationEffects.ResultChanged = true;
+					var methodCallNode = callNode as MethodCallNode;
+					possibleCallees = await GetPossibleCalleesForMethodCallAsync(methodCallNode.Receiver, methodCallNode.Method);
+
+					if (methodCallNode.Method.Name == "B.Target" &&
+						methodCallNode.Receiver.Name == "r")
+						;
+				}
+				else if (callNode is DelegateCallNode)
+				{
+					var delegateCallNode = callNode as DelegateCallNode;
+					possibleCallees = await GetPossibleCalleesForDelegateCallAsync(delegateCallNode.Delegate);
 				}
 
-				this.PopulateCallersInfo(propagationEffects.CallersInfo, propKind);
-			}
-		}
+				var modifiedCallees = new HashSet<ResolvedCallee>();
 
-		private async Task PopulateCalleesInfo(IEnumerable<CallInfo> calleesInfo, PropagationKind propKind)
-		{
-			foreach (var calleeInfo in calleesInfo)
-			{
-				//  Add instanciated types! 
-				// Diego: Ben. This may not work well in parallel... 
-				// We need a different way to update this info
-				//calleeInfo.InstantiatedTypes = this.methodEntity.InstantiatedTypes;
-
-				ISet<ResolvedCallee> modifiedCallees = null;
-				ISet<ResolvedCallee> allCallees = null;
-
-				if (calleeInfo is MethodCallInfo)
+				if (result.Kind == PropagationKind.ADD_TYPES)
 				{
-					var methodCallInfo = calleeInfo as MethodCallInfo;
-					modifiedCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method, propKind);
-					allCallees = await this.GetPossibleCalleesForMethodCallAsync(methodCallInfo.Receiver, methodCallInfo.Method);
+					// new callees - old callees
+					modifiedCallees.UnionWith(possibleCallees);
+					modifiedCallees.ExceptWith(callNode.PossibleCallees);
 				}
-				else if (calleeInfo is DelegateCallInfo)
+				else if (result.Kind == PropagationKind.REMOVE_TYPES)
 				{
-					var delegateCalleeInfo = calleeInfo as DelegateCallInfo;
-					modifiedCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate, propKind);
-					allCallees = await this.GetPossibleCalleesForDelegateCallAsync(delegateCalleeInfo.Delegate);
+					// old callees - new callees
+					modifiedCallees.UnionWith(callNode.PossibleCallees);
+					modifiedCallees.ExceptWith(possibleCallees);
 				}
 
-				//calleeInfo.ArgumentsModifiedTypes.Clear();
-				//calleeInfo.ArgumentsAllTypes.Clear();
+				callNode.PossibleCallees.Clear();
+				callNode.PossibleCallees.UnionWith(possibleCallees);
+
+				var callInfo = callNode.ToCallInfo();
+				effects.CalleesInfo.Add(callInfo);
 
 				var argumentsModifiedTypes = new List<ISet<TypeDescriptor>>();
 				var argumentsAllTypes = new List<ISet<TypeDescriptor>>();
 
-				for (var i = 0; i < calleeInfo.Arguments.Count; i++)
+				for (var i = 0; i < callInfo.Arguments.Count; ++i)
 				{
-					var arg = calleeInfo.Arguments[i];
+					var arg = callInfo.Arguments[i];
 
-					var types = GetModifiedTypes(arg, propKind);
+					var types = GetModifiedTypes(arg, result.Kind);
 					var modifiedTypes = new HashSet<TypeDescriptor>(types);
 					argumentsModifiedTypes.Add(modifiedTypes);
 
@@ -208,25 +210,37 @@ namespace OrleansClient.Analysis
 					argumentsAllTypes.Add(allTypes);
 				}
 
-				calleeInfo.ModifiedCallees = modifiedCallees;
-				calleeInfo.ArgumentsModifiedTypes = argumentsModifiedTypes;
-				calleeInfo.AllCallees = null;
-				calleeInfo.ArgumentsAllTypes = null;
+				callInfo.ModifiedCallees = modifiedCallees;
+				callInfo.ArgumentsModifiedTypes = argumentsModifiedTypes;
+				callInfo.AllCallees = null;
+				callInfo.ArgumentsAllTypes = null;
 
-				var hasModifiedCallees = modifiedCallees.Any(rc => !rc.IsStatic);
+				var hasModifiedCallees = modifiedCallees.Any();
 				var hasArgumentsModifiedTypes = argumentsModifiedTypes.Any(ts => ts.Any());
 
 				if (hasModifiedCallees)
 				{
-					calleeInfo.ArgumentsAllTypes = argumentsAllTypes;
+					callInfo.ArgumentsAllTypes = argumentsAllTypes;
 				}
 
 				if (hasArgumentsModifiedTypes)
 				{
-					allCallees.ExceptWith(modifiedCallees);
-					calleeInfo.AllCallees = allCallees;
+					possibleCallees.ExceptWith(modifiedCallees);
+					callInfo.AllCallees = possibleCallees;
 				}
 			}
+
+			if (this.methodEntity.ReturnVariable != null)
+			{
+				if (!effects.ResultChanged && this.newCallContext != null)
+				{
+					effects.ResultChanged = true;
+				}
+
+				PopulateCallersInfo(effects.CallersInfo, effects.Kind);
+			}
+
+			return effects;
 		}
 
 		private void PopulateCallersInfo(ISet<ReturnInfo> callersInfo, PropagationKind? propKind = null)
@@ -710,14 +724,27 @@ namespace OrleansClient.Analysis
 
 		public Task<PropagationEffects> RemoveMethodAsync()
 		{
-			var calleesInfo = from callNode in this.methodEntity.PropGraph.CallNodes
-							  let calleeInfo = this.methodEntity.PropGraph.GetInvocationInfo(callNode)
-							  select calleeInfo.Clone(calleeInfo.ModifiedCallees, calleeInfo.AllCallees);
-			//select calleeInfo;
+			var effects = new PropagationEffects(PropagationKind.REMOVE_TYPES, true);
 
-			var propagationEffects = new PropagationEffects(calleesInfo, true, PropagationKind.REMOVE_TYPES);
-			this.PopulateCallersInfo(propagationEffects.CallersInfo);
-			return Task.FromResult(propagationEffects);
+			foreach (var node in this.methodEntity.PropGraph.CallNodes)
+			{
+				var callNode = this.methodEntity.PropGraph.GetInvocationNode(node);
+				var callInfo = callNode.ToCallInfo();
+
+				for (var i = 0; i < callInfo.Arguments.Count; ++i)
+				{
+					var arg = callInfo.Arguments[i];
+					var types = GetAllTypes(arg);
+					var allTypes = new HashSet<TypeDescriptor>(types);
+					callInfo.ArgumentsAllTypes.Add(allTypes);
+				}
+
+				callInfo.ModifiedCallees.UnionWith(callNode.PossibleCallees);
+				effects.CalleesInfo.Add(callInfo);
+			}
+
+			this.PopulateCallersInfo(effects.CallersInfo);
+			return Task.FromResult(effects);
 		}
 
 		//public async Task<PropagationEffects> UpdateMethodAsync(ISet<ReturnInfo> callersToUpdate)

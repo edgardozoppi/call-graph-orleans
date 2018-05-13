@@ -37,7 +37,7 @@ namespace Common
 
 		public override string ToString()
         {
-            return string.Format("CallMessageInfo: {0} -> {1}", this.Caller, this.Callee);
+            return string.Format("CallMessageInfo({0}): {1} -> {2}", this.PropagationKind, this.Caller, this.Callee);
         }
 
         //public override bool Equals(object obj)
@@ -83,7 +83,7 @@ namespace Common
 
         public override string ToString()
         {
-            return string.Format("ReturnMessageInfo: {0} <- {1}", this.Caller, this.Callee);
+            return string.Format("ReturnMessageInfo({0}): {1} <- {2}", this.PropagationKind, this.Caller, this.Callee);
 		}
 	}
 }

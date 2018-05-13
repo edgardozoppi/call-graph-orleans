@@ -37,10 +37,10 @@ namespace OrleansClient.Analysis
 			return methodEntityGrain.PropagateAsync(propKind);
 		}
 
-		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
+		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode)
 		{
 			this.SetRequestContext();
-			return methodEntityGrain.PropagateAsync(propKind, reWorkSet);
+			return methodEntityGrain.PropagateAsync(propKind, callee, callNode);
 		}
 
 		public Task<PropagationEffects> PropagateAsync(CallMessageInfo callMessageInfo)
@@ -61,10 +61,10 @@ namespace OrleansClient.Analysis
             return methodEntityGrain.PropagateAndProcessAsync(propKind);
         }
 
-        public Task PropagateAndProcessAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
+        public Task PropagateAndProcessAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode)
         {
             this.SetRequestContext();
-            return methodEntityGrain.PropagateAndProcessAsync(propKind, reWorkSet);
+            return methodEntityGrain.PropagateAndProcessAsync(propKind, callee, callNode);
         }
 
         public Task PropagateAndProcessAsync(CallMessageInfo callMessageInfo)

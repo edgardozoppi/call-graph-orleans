@@ -24,7 +24,7 @@ namespace Common
     public interface IMethodEntityWithPropagator : IEntity
     {
         Task<PropagationEffects> PropagateAsync(PropagationKind propKind);
-		Task<PropagationEffects> PropagateAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet);
+		Task<PropagationEffects> PropagateAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode);
         Task<PropagationEffects> PropagateAsync(CallMessageInfo callMessageInfo);
         Task<PropagationEffects> PropagateAsync(ReturnMessageInfo returnMessageInfo);
         Task<bool> IsInitializedAsync();

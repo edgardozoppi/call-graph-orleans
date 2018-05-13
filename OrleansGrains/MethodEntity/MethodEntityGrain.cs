@@ -183,10 +183,10 @@ namespace OrleansClient.Analysis
 			return result;
 		}
 
-		public async Task PropagateAndProcessAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
+		public async Task PropagateAndProcessAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode)
 		{
 			await StatsHelper.RegisterMsg("MethodEntityGrain::PropagateAndProcess", this.GrainFactory);
-			var effects = await this.methodEntityPropagator.PropagateAsync(propKind, reWorkSet); // await this.PropagateAsync(propKind, reWorkSet);
+			var effects = await this.methodEntityPropagator.PropagateAsync(propKind, callee, callNode); // await this.PropagateAsync(propKind, callee, callNode);
 			await StatsHelper.RegisterPropagationUpdates(effects.NumberOfUpdates, effects.WorkListInitialSize, this.GrainFactory);
 
 			await ProcessEffectsAsync(effects);
@@ -530,7 +530,7 @@ namespace OrleansClient.Analysis
 			return stream;
 		}
 
-		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, IEnumerable<PropGraphNodeDescriptor> reWorkSet)
+		public Task<PropagationEffects> PropagateAsync(PropagationKind propKind, MethodDescriptor callee, AnalysisCallNode callNode)
 		{
 			StatsHelper.RegisterMsg("MethodEntityGrain::PropagateWithRework", this.GrainFactory);
 
@@ -543,7 +543,7 @@ namespace OrleansClient.Analysis
 			//	}
 			//}
 
-            return this.methodEntityPropagator.PropagateAsync(propKind, reWorkSet);
+            return this.methodEntityPropagator.PropagateAsync(propKind, callee, callNode);
 		}
 
 		public async Task<PropagationEffects> PropagateAsync(PropagationKind propKind)

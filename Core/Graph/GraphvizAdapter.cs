@@ -51,16 +51,16 @@ namespace OrleansClient
 					else
 					{
 
-						if (invoc is MethodCallInfo)
+						if (invoc is MethodCallNode)
 						{
-							var callNode = invoc as MethodCallInfo;
+							var callNode = invoc as MethodCallNode;
 							var lhsStr = callNode.LHS == null ? "$" : callNode.LHS.ToString();
 							var recStr = callNode.Receiver == null ? "[]" : callNode.Receiver.ToString(); ;
 							writer.WriteLine(@"{0} [shape=""circle"",label=""{1}:{2}, lhs={3} rec={4}"",fillcolor=""blue""];", v.Id, callNode.Method.ToString(), elemsStr, lhsStr, recStr);
 						}
-						if (invoc is DelegateCallInfo)
+						if (invoc is DelegateCallNode)
 						{
-							var deleNode = invoc as DelegateCallInfo;
+							var deleNode = invoc as DelegateCallNode;
 							writer.WriteLine(@"{0} [shape=""circle"",label=""{1}:[{2}]"",fillcolor=""brown""];", v.Id, deleNode.Delegate.ToString(), elemsStr);
 
 						}

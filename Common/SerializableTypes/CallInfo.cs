@@ -39,7 +39,7 @@ namespace Common
 		 *   propagate to all callees the added/deleted argument types +
 		 *   propagate to the added/deleted callees all argument types.
 		 */
-		
+
 		public CallInfo(MethodDescriptor caller, AnalysisCallNode callNode,
 			PropGraphNodeDescriptor receiver, IList<PropGraphNodeDescriptor> arguments, VariableNode lhs)
 		{

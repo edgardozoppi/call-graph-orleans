@@ -38,6 +38,14 @@ namespace Common
             //this.MethodEntityReady = true;
         }
 
+		public PropagationEffects(PropagationKind kind, bool resultChanged)
+		{
+			this.Kind = kind;
+			this.ResultChanged = resultChanged;
+			this.CallersInfo = new HashSet<ReturnInfo>();
+			this.CalleesInfo = new HashSet<CallInfo>();
+		}
+
         public PropagationEffects()
         {
             //this.MoreEffectsToFetch = false;

@@ -236,14 +236,9 @@ namespace OrleansClient.Analysis
 			return;
 		}
 
-		public async Task AnalyzeAsync(MethodDescriptor method, IEnumerable<PropGraphNodeDescriptor> reworkSet = null, PropagationKind propKind = PropagationKind.ADD_TYPES)
+		public async Task AnalyzeAsync(MethodDescriptor method, MethodDescriptor callee, AnalysisCallNode callNode, PropagationKind propKind)
 		{
 			Logger.LogS("AnalysisOrchestator", "AnalyzeAsync", "Analyzing {0} ", method);
-
-			if (reworkSet == null)
-			{
-				reworkSet = new HashSet<PropGraphNodeDescriptor>();
-			}
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 			var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(method);
@@ -260,7 +255,7 @@ namespace OrleansClient.Analysis
 			//
 			//await PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
 
-			var propagationEffects = await methodEntityProc.PropagateAsync(propKind, reworkSet);
+			var propagationEffects = await methodEntityProc.PropagateAsync(propKind, callee, callNode);
 			await PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
 			await ProcessMessages();
 		}
@@ -295,7 +290,7 @@ namespace OrleansClient.Analysis
 						{
 							var calleeMessage = (CalleeMessage)message;
 							var calleeMessageInfo = calleeMessage.ReturnMessageInfo;
-                            var task = this.AnalyzeReturnAsync(calleeMessageInfo.Caller, calleeMessage, calleeMessageInfo.PropagationKind);
+							var task = this.AnalyzeReturnAsync(calleeMessageInfo.Caller, calleeMessage, calleeMessageInfo.PropagationKind);
 							//await task;
 							tasks.Add(task);
 						}
@@ -690,10 +685,8 @@ namespace OrleansClient.Analysis
 
 			foreach (var callerInfo in callersInfo)
 			{
-				var reworkSet = new HashSet<PropGraphNodeDescriptor>();
 				var callContext = callerInfo.CallerContext;
-				reworkSet.Add(callContext.CallNode);
-				var task = this.AnalyzeAsync(callContext.Caller, reworkSet, propKind);
+				var task = this.AnalyzeAsync(callContext.Caller, callerInfo.Callee, callContext.CallNode, propKind);
 				//await task;
 				tasks.Add(task);
 			}

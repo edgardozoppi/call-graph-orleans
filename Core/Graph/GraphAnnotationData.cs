@@ -24,7 +24,7 @@ namespace OrleansClient
 		internal ISet<TypeDescriptor> DeletedTypes { get; private set; }
 		internal ISet<MethodDescriptor> Delegates { get; set; }
 		internal PropGraphNodeDescriptor Node { get; set; }
-		internal CallInfo CallNode { get; set; }
+		internal CallNode CallNode { get; set; }
 		internal bool HasRetValue { get; set; }
 
 		internal GraphNodeAnnotationData(PropGraphNodeDescriptor node)
@@ -121,6 +121,92 @@ namespace OrleansClient
 			{
 				edgeTypes.ExceptWith(types);
 			}
+		}
+	}
+
+	[Serializable]
+	internal abstract class CallNode
+	{
+		public bool IsConstructor { get; set; }
+		public MethodDescriptor Caller { get; set; }
+		public IList<PropGraphNodeDescriptor> Arguments { get; set; }
+		public PropGraphNodeDescriptor Receiver { get; set; }
+		public VariableNode LHS { get; set; }
+		public AnalysisCallNode Node { get; set; }
+
+		// Stores all possible callees.
+		public ISet<ResolvedCallee> PossibleCallees { get; set; }
+
+		public CallNode(MethodDescriptor caller, AnalysisCallNode callNode,
+			PropGraphNodeDescriptor receiver, IList<PropGraphNodeDescriptor> arguments, VariableNode lhs)
+		{
+			this.Caller = caller;
+			this.Arguments = arguments;
+			this.LHS = lhs;
+			this.Receiver = receiver;
+			this.Node = callNode;
+			this.PossibleCallees = new HashSet<ResolvedCallee>();
+		}
+
+		public bool IsStatic
+		{
+			get { return this.Receiver == null; }
+		}
+
+		public abstract CallInfo ToCallInfo();
+	}
+
+	[Serializable]
+	internal class MethodCallNode : CallNode
+	{
+		public MethodDescriptor Method { get; private set; }
+
+		public MethodCallNode(MethodDescriptor caller, AnalysisCallNode callNode, MethodDescriptor method,
+			PropGraphNodeDescriptor receiver, IList<PropGraphNodeDescriptor> arguments,
+			VariableNode lhs, bool isConstructor)
+			: base(caller, callNode, receiver, arguments, lhs)
+		{
+			this.IsConstructor = isConstructor;
+			this.Method = method;
+		}
+
+		public MethodCallNode(MethodDescriptor caller, AnalysisCallNode callNode,
+			MethodDescriptor method, IList<PropGraphNodeDescriptor> arguments,
+			VariableNode lhs, bool isConstructor)
+			: this(caller, callNode, method, null, arguments, lhs, isConstructor)
+		{
+		}
+
+		public override CallInfo ToCallInfo()
+		{
+			var result = new MethodCallInfo(this.Caller, this.Node, this.Method, this.Receiver, this.Arguments, this.LHS, this.IsConstructor);
+			return result;
+		}
+	}
+
+	[Serializable]
+	internal class DelegateCallNode : CallNode
+	{
+		public DelegateVariableNode Delegate { get; private set; }
+
+		public DelegateCallNode(MethodDescriptor caller, AnalysisCallNode callNode,
+			DelegateVariableNode calleeDelegate, PropGraphNodeDescriptor receiver,
+			IList<PropGraphNodeDescriptor> arguments, VariableNode lhs)
+			: base(caller, callNode, receiver, arguments, lhs)
+		{
+			this.Delegate = calleeDelegate;
+		}
+
+		public DelegateCallNode(MethodDescriptor caller, AnalysisCallNode callNode,
+			DelegateVariableNode @delegate, IList<PropGraphNodeDescriptor> arguments, VariableNode lhs)
+			: this(caller, callNode, @delegate, null, arguments, lhs)
+		{
+		}
+
+		public override CallInfo ToCallInfo()
+		{
+			var result = new DelegateCallInfo(this.Caller, this.Node, this.Delegate, this.Receiver, this.Arguments, this.LHS);
+			return result;
 		}
 	}
 
