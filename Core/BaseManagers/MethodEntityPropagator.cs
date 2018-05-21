@@ -162,10 +162,6 @@ namespace OrleansClient.Analysis
 				{
 					var methodCallNode = callNode as MethodCallNode;
 					possibleCallees = await GetPossibleCalleesForMethodCallAsync(methodCallNode.Receiver, methodCallNode.Method);
-
-					if (methodCallNode.Method.Name == "B.Target" &&
-						methodCallNode.Receiver.Name == "r")
-						;
 				}
 				else if (callNode is DelegateCallNode)
 				{
@@ -294,7 +290,7 @@ namespace OrleansClient.Analysis
 				return new PropagationEffects(calleesInfo, false);
 			}
 
-			var edge = string.Format("{0} {1}", callMessageInfo.Caller, callMessageInfo.CallNode);
+			var edge = string.Format("{0}@{1}#{2}", callMessageInfo.Caller, callMessageInfo.CallNode.Name, callMessageInfo.CallNode.InMethodPosition);
 
 			if (this.methodEntity.ThisRef != null && callMessageInfo.ReceiverType != null)
 			{
