@@ -744,16 +744,20 @@ namespace OrleansClient.Analysis
 			//Logger.Log("Removed methods:\n{0}", string.Join("\n", methodsRemoved));
 			//Logger.Log("Modified methods:\n{0}", string.Join("\n", methodsUpdated));
 			//Logger.Log("Added methods:\n{0}", string.Join("\n", methodsAdded));
-			
+
+			var totalMethodsCount = methodsRemoved.Count + methodsUpdated.Count + methodsAdded.Count;
+
 			Logger.Log("Removed methods: {0}", methodsRemoved.Count);
 			Logger.Log("Modified methods: {0}", methodsUpdated.Count);
 			Logger.Log("Added methods: {0}", methodsAdded.Count);
-			Logger.Log("Total methods: {0}", methodsRemoved.Count + methodsUpdated.Count + methodsAdded.Count);
+			Logger.Log("Total methods: {0}", totalMethodsCount);
 
 			Console.WriteLine("Removed methods: {0}", methodsRemoved.Count);
 			Console.WriteLine("Modified methods: {0}", methodsUpdated.Count);
 			Console.WriteLine("Added methods: {0}", methodsAdded.Count);
-			Console.WriteLine("Total methods: {0}", methodsRemoved.Count + methodsUpdated.Count + methodsAdded.Count);
+			Console.WriteLine("Total methods: {0}", totalMethodsCount);
+
+			Console.Error.Write("\t{0}", totalMethodsCount);
 
 			var methodsRemovedOrUpdated = methodsRemoved.Union(methodsUpdated);
 			var methodsAddedOrUpdated = methodsAdded.Union(methodsUpdated);

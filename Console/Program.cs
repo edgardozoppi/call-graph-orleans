@@ -64,7 +64,7 @@ namespace Console
 
 
 				// 100 commits OK
-				//@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "3841eacd 441dc0bf cb6cc4a2 a9cb5a23 136ef977 4f6e969c 18450108 1219ef78 688ea9d6 26a32d2d 691d1e36 1a9205f9 0d6af0b3 204d6c2f 635ea7a2 b4362c09 38773f06 50495242 7fc5c515 89820bad 295749d7 c2736389 10d7476a 2fc7163e b01e7aa0 80ee2742 718dd711 de66d1e9 15e06f1f 4dccf81b 6bc7e0c4 5a03cad9 e19c60f8 3c8f5a1f 2d583800 0d524dca 7b306667 4b432f17 d653c02b 23fe2271 26fbf92f 0e76707a d98060f1 bbf00ed7 f8c57a4d 522b52a8 fa85ab2f aeec1ad4 815cc3ee a600de8e 096ab1c7 1c84e730 fddd843f 6d324d3f eee34635 27398925 9a3f8725 77de435a cc6df456 0b94f69b b3640f6f 1191f1b2 6f4854b4 ec034076 da2c9844 f7eda15a 08d91a25 cb91274d 240a8ceb 46e86d91 8dbbcad2 757e4b0e 468bccbc f5175e89 8131eeb7 009ee9d2 b4abf36b b2cbc035 6dd07cb8 2f15401d 2a5370c1 48681af9 0c36f823 6ee3e305 1a9888e0 1f593181 3741435f a51cdefb 226ccd9a 3e9d67dc cadd9c7f 4ea6ce88 308e20be 2967ef26 fefca5ee e802b050 6ef221a6 ce32d0bb 1bbd68c0 a19e6afe"
+				@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "3841eacd 441dc0bf cb6cc4a2 a9cb5a23 136ef977 4f6e969c 18450108 1219ef78 688ea9d6 26a32d2d 691d1e36 1a9205f9 0d6af0b3 204d6c2f 635ea7a2 b4362c09 38773f06 50495242 7fc5c515 89820bad 295749d7 c2736389 10d7476a 2fc7163e b01e7aa0 80ee2742 718dd711 de66d1e9 15e06f1f 4dccf81b 6bc7e0c4 5a03cad9 e19c60f8 3c8f5a1f 2d583800 0d524dca 7b306667 4b432f17 d653c02b 23fe2271 26fbf92f 0e76707a d98060f1 bbf00ed7 f8c57a4d 522b52a8 fa85ab2f aeec1ad4 815cc3ee a600de8e 096ab1c7 1c84e730 fddd843f 6d324d3f eee34635 27398925 9a3f8725 77de435a cc6df456 0b94f69b b3640f6f 1191f1b2 6f4854b4 ec034076 da2c9844 f7eda15a 08d91a25 cb91274d 240a8ceb 46e86d91 8dbbcad2 757e4b0e 468bccbc f5175e89 8131eeb7 009ee9d2 b4abf36b b2cbc035 6dd07cb8 2f15401d 2a5370c1 48681af9 0c36f823 6ee3e305 1a9888e0 1f593181 3741435f a51cdefb 226ccd9a 3e9d67dc cadd9c7f 4ea6ce88 308e20be 2967ef26 fefca5ee e802b050 6ef221a6 ce32d0bb 1bbd68c0 a19e6afe"
 
 				// commit 191d2946: Changing top 5 methods with max callees.
 				//@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "3841eacd 191d2946"
@@ -110,7 +110,7 @@ namespace Console
 				// commit 17b0fc71: Changing top 5 most influential methods.
 				//@"C:\azure-powershell\src\ResourceManager.ForRefactoringOnly.sln", "OnDemandAsync", "4a788ac83 17b0fc71"
 				// commit 16b66f72: Changing top 5 less influential methods.
-				@"C:\azure-powershell\src\ResourceManager.ForRefactoringOnly.sln", "OnDemandAsync", "4a788ac83 16b66f72"
+				//@"C:\azure-powershell\src\ResourceManager.ForRefactoringOnly.sln", "OnDemandAsync", "4a788ac83 16b66f72"
 			};
 
 			//// This is to compute solution statistics
@@ -131,14 +131,19 @@ namespace Console
 					var commits = commitList.Split(' ');
 					var program = new Program(strategyKind);
 
-					program.Initialize();
-					//var callGraph = program.BuildCallGraph(solutionPath);
-					//program.RunAnalysis(solutionPath);
-					//program.RunAnalysis(solutionPath, commits);
-					program.RunIncrementalAnalysis(solutionPath, commits);
-					program.Cleanup();
+					using (var logFile = File.CreateText(@"C:\Users\Edgar\Repositories\last_run.txt"))
+					{
+						System.Console.SetError(logFile);
 
-					//callGraph.Save(outputPath);
+						program.Initialize();
+						//var callGraph = program.BuildCallGraph(solutionPath);
+						//program.RunAnalysis(solutionPath);
+						//program.RunAnalysis(solutionPath, commits);
+						program.RunIncrementalAnalysis(solutionPath, commits);
+						program.Cleanup();
+
+						//callGraph.Save(outputPath);
+					}
 				}
 				catch (Exception ex)
 				{
@@ -169,11 +174,18 @@ namespace Console
 
 			System.Console.WriteLine(repoFolder);
 
+			System.Console.Error.WriteLine(solutionFileName);
+			System.Console.Error.Write("commit\ttime\treachable methods");
+
 			//CleanUpWorkingCopy(solutionFolder);
 
 			for (var i = 0; i < commits.Length; ++i)
 			{
 				var commit = commits[i];
+
+				System.Console.Error.Flush();
+				System.Console.Error.WriteLine();
+				System.Console.Error.Write(commit);
 
 				System.Console.WriteLine(">> Analysis {0}: {1}", i, commit);
 
@@ -199,8 +211,9 @@ namespace Console
 					RunAndPrintCommand(solutionFolder, program, string.Empty);
 				}
 
-				//this.RunAnalysis(solutionPath);
+				this.RunAnalysis(solutionPath);
 
+				/*
 				var analyzer = this.RunAnalysis(solutionPath);
 
 				System.Console.WriteLine("Generating call graph...");
@@ -247,6 +260,7 @@ namespace Console
 						writter.WriteLine("{0}\t{1}", entry.Count, entry.Method);
 					}
 				}
+				*/
 			}
 		}
 
@@ -271,6 +285,10 @@ namespace Console
 			if (initialCommit != null)
 			{
 				System.Console.WriteLine(repoFolder);
+
+				System.Console.Error.WriteLine(solutionFileName);
+				System.Console.Error.WriteLine("commit\tmodified methods\tmodified documents\ttime\treachable methods");
+				System.Console.Error.Write(initialCommit);
 
 				//CleanUpWorkingCopy(solutionFolder);
 
@@ -302,6 +320,10 @@ namespace Console
 			for (var i = 1; i < commits.Length; ++i)
 			{
 				var commit = commits[i];
+
+				System.Console.Error.Flush();
+				System.Console.Error.WriteLine();
+				System.Console.Error.Write(commit);
 
 				System.Console.WriteLine(">> Incremental analysis {0}: {1}", i, commit);
 
@@ -375,6 +397,10 @@ namespace Console
 				System.Console.ForegroundColor = color;
 				System.Console.WriteLine();
 
+				System.Console.Error.Write("\t{0}", modifiedDocuments.Count);
+				System.Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
+				System.Console.Error.Write("\t{0}", reachableMethodsCount);
+
 				//var callGraph = analyzer.GenerateCallGraphAsync().Result;
 				//callGraph.Save(CallGraphPath);
 			}
@@ -441,6 +467,10 @@ namespace Console
 			System.Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
 			System.Console.ForegroundColor = color;
 			System.Console.WriteLine();
+
+			System.Console.Error.Write("\t\t");
+			System.Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
+			System.Console.Error.Write("\t{0}", reachableMethodsCount);
 
 			return analyzer;
 		}
