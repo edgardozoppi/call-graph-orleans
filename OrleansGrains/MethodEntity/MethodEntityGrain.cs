@@ -70,8 +70,7 @@ namespace OrleansClient.Analysis
 
 			await StatsHelper.RegisterActivation("MethodEntityGrain", this.GrainFactory);
 
-			Logger.OrleansLogger = this.GetLogger();
-			Logger.LogVerbose(this.GetLogger(), "MethodEntityGrain", "OnActivate", "Activation for {0} ", this.GetPrimaryKeyString());
+			Logger.LogVerbose("MethodEntityGrain", "OnActivate", "Activation for {0} ", this.GetPrimaryKeyString());
 
 			var methodDescriptor = MethodDescriptor.DeMarsall(this.GetPrimaryKeyString());
 
@@ -96,7 +95,7 @@ namespace OrleansClient.Analysis
 				var inner = ex;
 				while (inner is AggregateException) inner = inner.InnerException;
 
-				Logger.LogError(this.GetLogger(), "MethodEntityGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
+				Logger.LogError("MethodEntityGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
 				throw ex;
 			}
 			//});
@@ -106,7 +105,7 @@ namespace OrleansClient.Analysis
 		{
 			//await StatsHelper.RegisterMsg("MethodEntityGrain::ForceDeactivation", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "MethodEntityGrain", "ForceDeactivation", "force for {0} ", this.GetPrimaryKeyString());
+			Logger.LogVerbose("MethodEntityGrain", "ForceDeactivation", "force for {0} ", this.GetPrimaryKeyString());
 			await this.ClearStateAsync();
 
 			//this.State.MethodDescriptor = null;
@@ -119,7 +118,7 @@ namespace OrleansClient.Analysis
 		{
 			StatsHelper.RegisterDeactivation("MethodEntityGrain", this.GrainFactory);
 
-			Logger.LogWarning(this.GetLogger(), "MethodEntityGrain", "OnDeactivate", "Deactivation for {0} ", this.GetPrimaryKeyString());
+			Logger.LogWarning("MethodEntityGrain", "OnDeactivate", "Deactivation for {0} ", this.GetPrimaryKeyString());
 
 			this.methodEntity = null;
 			return Task.CompletedTask;
@@ -141,7 +140,7 @@ namespace OrleansClient.Analysis
 			//this.codeProvider = new ProjectCodeProviderWithCache(codeProviderGrain);
 			this.codeProvider = codeProviderGrain;
 
-			//Logger.LogWarning(this.GetLogger(), "MethodEntityGrain", "CreateMethodEntity", "{0} calls to proivder {1}", methodDescriptor, this.codeProvider);
+			//Logger.LogWarning("MethodEntityGrain", "CreateMethodEntity", "{0} calls to proivder {1}", methodDescriptor, this.codeProvider);
 			var sw = new Stopwatch();
 			sw.Start();
 
@@ -149,7 +148,7 @@ namespace OrleansClient.Analysis
 
 			sw.Stop();
 
-			Logger.LogInfo(this.GetLogger(), "MethodEntityGrain", "CreateMethodEntity", "{0};call to provider;{1};ms;{2};ticks", methodDescriptor, sw.ElapsedMilliseconds, sw.ElapsedTicks);
+			Logger.LogInfo("MethodEntityGrain", "CreateMethodEntity", "{0};call to provider;{1};ms;{2};ticks", methodDescriptor, sw.ElapsedMilliseconds, sw.ElapsedTicks);
 
 			if (methodDescriptor.IsAnonymousDescriptor)
 			{
@@ -164,7 +163,7 @@ namespace OrleansClient.Analysis
 
 			await this.WriteStateAsync();
 
-			//Logger.LogWarning(this.GetLogger(), "MethodEntityGrain", "CreateMethodEntity", "Exit {0}", methodDescriptor);
+			//Logger.LogWarning("MethodEntityGrain", "CreateMethodEntity", "Exit {0}", methodDescriptor);
 		}
 
 		public async Task<ISet<MethodDescriptor>> GetCalleesAsync()
@@ -304,7 +303,7 @@ namespace OrleansClient.Analysis
 							{
 								//var effectsInfo = this.SerializeEffects(effects);
 								var effectsInfo = this.GetEffectsInfo(effects);
-								Logger.LogError(this.GetLogger(), "MethodEntityGrain", "EnqueueEffects", "Exception on OnNextAsync (maxCallSiteCount = {0}, {1})\n{2}", maxCallSitesCount, effectsInfo, ex);
+								Logger.LogError("MethodEntityGrain", "EnqueueEffects", "Exception on OnNextAsync (maxCallSiteCount = {0}, {1})\n{2}", maxCallSitesCount, effectsInfo, ex);
 								//throw ex;
 							}
 						}
@@ -317,7 +316,7 @@ namespace OrleansClient.Analysis
 						{
 							//var effectsInfo = this.SerializeEffects(effects);
 							var effectsInfo = this.GetEffectsInfo(effects);
-							Logger.LogError(this.GetLogger(), "MethodEntityGrain", "EnqueueEffects", "Exception on OnNextAsync (maxCallSiteCount = {0}, {1})\n{2}", maxCallSitesCount, effectsInfo, ex);
+							Logger.LogError("MethodEntityGrain", "EnqueueEffects", "Exception on OnNextAsync (maxCallSiteCount = {0}, {1})\n{2}", maxCallSitesCount, effectsInfo, ex);
 							//throw ex;
 						}
 					}
@@ -334,13 +333,13 @@ namespace OrleansClient.Analysis
 				{
 					newMaxCallSitesCount = (maxCallSitesCount / 2) + (maxCallSitesCount % 2);
 
-					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (call sites) of size {1} into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCallSitesCount);
+					Logger.LogInfo("@@[MethodEntityGrain {0}] Splitting effects (call sites) of size {1} into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCallSitesCount);
 				}
 				else if (maxCallersCount > 1)
 				{
 					newMaxCallersCount = (maxCallersCount / 2) + (maxCallersCount % 2);
 
-					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (callers) of size {1} into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallersCount, newMaxCallersCount);
+					Logger.LogInfo("@@[MethodEntityGrain {0}] Splitting effects (callers) of size {1} into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallersCount, newMaxCallersCount);
 				}
 
 				await this.SplitAndEnqueueEffectsAsync(effects, newMaxCallSitesCount, newMaxCallersCount, maxCalleesCount);
@@ -359,7 +358,7 @@ namespace OrleansClient.Analysis
 					maxCalleesCount = Math.Min(calleeInfo.ModifiedCallees.Count, maxCalleesCount);
 					var newMaxCalleesCount = (maxCalleesCount / 2) + (maxCalleesCount % 2);
 
-					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
+					Logger.LogInfo("@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
 
 					await this.SplitAndEnqueueCalleeEffectsAsync(effects, maxCallSitesCount, maxCallersCount, newMaxCalleesCount);
 				}
@@ -369,7 +368,7 @@ namespace OrleansClient.Analysis
 					maxCalleesCount = Math.Min(calleeInfo.AllCallees.Count, maxCalleesCount);
 					var newMaxCalleesCount = (maxCalleesCount / 2) + (maxCalleesCount % 2);
 
-					Logger.LogForRelease(this.GetLogger(), "@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
+					Logger.LogInfo("@@[MethodEntityGrain {0}] Splitting effects (callees of) {1} call site into parts of size {2}", this.methodEntity.MethodDescriptor, maxCallSitesCount, newMaxCalleesCount);
 
 					await this.SplitAndEnqueueCalleeEffectsAsync(effects, maxCallSitesCount, maxCallersCount, newMaxCalleesCount);
 				}
@@ -525,7 +524,7 @@ namespace OrleansClient.Analysis
 			var streamProvider = this.GetStreamProvider(AnalysisConstants.StreamProvider);
 			var stream = streamProvider.GetStream<PropagationEffects>(streamGuid, AnalysisConstants.StreamNamespace);
 
-			Logger.LogInfoForDebug(this.GetLogger(), "@@[MethodEntityGrain {0}] Enqueuing effects into stream {1}", this.methodEntity.MethodDescriptor, streamGuid);
+			Logger.LogInfo("@@[MethodEntityGrain {0}] Enqueuing effects into stream {1}", this.methodEntity.MethodDescriptor, streamGuid);
 
 			return stream;
 		}
@@ -559,7 +558,7 @@ namespace OrleansClient.Analysis
 			//	}
 			//}
 
-            Logger.LogVerbose(this.GetLogger(), "MethodEntityGrain", "Propagate", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
+            Logger.LogVerbose("MethodEntityGrain", "Propagate", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
 
             var sw = new Stopwatch();
             sw.Start();
@@ -567,7 +566,7 @@ namespace OrleansClient.Analysis
             sw.Stop();
             propagationEffects.SiloAddress = StatsHelper.GetMyIPAddr();
 
-            Logger.LogInfo(this.GetLogger(),"MethodEntityGrain", "Propagate", "End Propagation for {0}. Time elapsed {1} Effects size: {2}", this.methodEntity.MethodDescriptor,sw.Elapsed, propagationEffects.CalleesInfo.Count);
+            Logger.LogInfo("MethodEntityGrain", "Propagate", "End Propagation for {0}. Time elapsed {1} Effects size: {2}", this.methodEntity.MethodDescriptor,sw.Elapsed, propagationEffects.CalleesInfo.Count);
             await StatsHelper.RegisterPropagationUpdates(propagationEffects.NumberOfUpdates, propagationEffects.WorkListInitialSize, this.GrainFactory);
 
             return propagationEffects;

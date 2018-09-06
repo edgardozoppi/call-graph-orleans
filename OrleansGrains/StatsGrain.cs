@@ -66,8 +66,7 @@ namespace OrleansClient.Analysis
         {
 			this.State = new StatsState();
 
-			Logger.OrleansLogger = this.GetLogger();
-            Logger.LogVerbose(this.GetLogger(), "StatsGrain", "OnActivate","Enter");
+            Logger.LogVerbose("StatsGrain", "OnActivate","Enter");
 
 			this.State.SiloSentMsgs = new Dictionary<string, Dictionary<string, long>>();
 			this.State.SiloRecvMsgs = new Dictionary<string, Dictionary<string, long>>();
@@ -90,7 +89,7 @@ namespace OrleansClient.Analysis
 				MaxLatencyMsg = ""
 			};
 
-			Logger.LogVerbose(this.GetLogger(), "StatsGrain", "OnActivate", "Exit");
+			Logger.LogVerbose("StatsGrain", "OnActivate", "Exit");
 			return Task.CompletedTask;
 		}
 
@@ -104,7 +103,7 @@ namespace OrleansClient.Analysis
             //}
             this.memoryUsage = 0;
 
-            Logger.LogInfo(this.GetLogger(), "StatGrain", "Register Msg", "Addr1:{0} Addr2:{1} {2}" ,senderAddr,receiverAddr,message);
+            Logger.LogInfo("StatGrain", "Register Msg", "Addr1:{0} Addr2:{1} {2}" ,senderAddr,receiverAddr,message);
 			AddToMap(this.State.SiloSentMsgs, senderAddr, receiverAddr);
 			AddToMap(this.State.SiloRecvMsgs, receiverAddr, senderAddr);
      		IncrementCounter(message, this.operationCounter);

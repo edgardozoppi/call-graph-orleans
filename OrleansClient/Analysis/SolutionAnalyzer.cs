@@ -207,7 +207,7 @@ namespace OrleansClient.Analysis
 			else if (this.solutionPath != null)
 			{
 				await solutionGrain.SetSolutionPathAsync(this.solutionPath);
-                Logger.LogWarning(GrainClient.Logger, "SolutionAnalyzer", "InitializeOnDemandOrleansAsync", "Exit SetSolutionPath");
+                Logger.LogWarning("SolutionAnalyzer", "InitializeOnDemandOrleansAsync", "Exit SetSolutionPath");
             }
             else
 			{
@@ -235,28 +235,28 @@ namespace OrleansClient.Analysis
 
 		public async Task ContinueOnDemandOrleansAnalysis()
 		{
-			Logger.LogForRelease(GrainClient.Logger, "@@[Client] Analysis start");
-			Logger.LogForRelease(GrainClient.Logger, "@@[Client] Stream count {0} ({1} instances)", AnalysisConstants.StreamCount, AnalysisConstants.InstanceCount);
+			Logger.LogInfo("@@[Client] Analysis start");
+			Logger.LogInfo("@@[Client] Stream count {0} ({1} instances)", AnalysisConstants.StreamCount, AnalysisConstants.InstanceCount);
 
 			var roots = await this.SolutionManager.GetRootsAsync(this.RootKind);
 
-			Logger.LogForRelease(GrainClient.Logger, "@@[Client] Roots count {0} ({1})", roots.Count(), this.RootKind);
+			Logger.LogInfo("@@[Client] Roots count {0} ({1})", roots.Count(), this.RootKind);
 
 			await this.SubscribeToAllDispatchersAsync();
 			await this.ProcessRootMethodsAsync(roots);
 			await this.WaitForTerminationAsync();
 
-			Logger.LogForRelease(GrainClient.Logger, "@@[Client] Analysis end");
+			Logger.LogInfo("@@[Client] Analysis end");
 
 			//var roots = await this.SolutionManager.GetRootsAsync(this.RootKind);
-			//Logger.LogWarning(GrainClient.Logger, "SolutionAnalyzer", "ContinueOnDemandOrleansAnalysis", "Roots count {0} ({1})", roots.Count(), this.RootKind);
+			//Logger.LogWarning("SolutionAnalyzer", "ContinueOnDemandOrleansAnalysis", "Roots count {0} ({1})", roots.Count(), this.RootKind);
 			//
 			//var orchestator = new AnalysisOrchestrator(this.SolutionManager);
 			//await orchestator.AnalyzeAsync(roots);
 			////await orchestator.AnalyzeDistributedAsync(roots);
 
 			//var callGraph = await orchestator.GenerateCallGraphAsync();
-			Logger.LogInfo(GrainClient.Logger, "SolutionAnalyzer", "ContinueOnDemandOrleansAnalysis", "Message count {0}", MessageCounter);
+			Logger.LogInfo("SolutionAnalyzer", "ContinueOnDemandOrleansAnalysis", "Message count {0}", MessageCounter);
 			//return callGraph;
 		}
 
@@ -299,7 +299,7 @@ namespace OrleansClient.Analysis
 
 		private async Task ProcessMethodAsync(MethodDescriptor method)
 		{
-			Logger.LogS("SolutionAnalyzer", "ProcessMethod", "Analyzing: {0}", method);
+			Logger.LogVerbose("SolutionAnalyzer", "ProcessMethod", "Analyzing: {0}", method);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 			var methodEntityProc = await this.GetMethodEntityGrainAndActivateInProject(method);
@@ -307,7 +307,7 @@ namespace OrleansClient.Analysis
 			await methodEntityProc.UseDeclaredTypesForParameters();
 			await methodEntityProc.PropagateAndProcessAsync(PropagationKind.ADD_TYPES);
 
-			Logger.LogS("SolutionAnalyzer", "ProcessMethod", "End Analyzing {0} ", method);
+			Logger.LogVerbose("SolutionAnalyzer", "ProcessMethod", "End Analyzing {0} ", method);
 		}
 
 		private Task<IMethodEntityGrain> GetMethodEntityGrainAndActivateInProject(MethodDescriptor method)
@@ -327,7 +327,7 @@ namespace OrleansClient.Analysis
 			while (this.dispatchersStatus.Any(e => e.Value == EffectsDispatcherStatus.Busy) &&
 				AnalysisClient.ExperimentStatus != ExperimentStatus.Cancelled)
 			{
-				Logger.LogForDebug(GrainClient.Logger, "@@[Client] Waiting for termination...");
+				Logger.LogInfo("@@[Client] Waiting for termination...");
 				await Task.Delay(AnalysisConstants.WaitForTerminationDelay);
 			}
 		}
@@ -338,12 +338,12 @@ namespace OrleansClient.Analysis
 			var oldStatus = this.dispatchersStatus[dispatcherGuid];
 			this.dispatchersStatus[dispatcherGuid] = newStatus;
 
-			Logger.LogForRelease(GrainClient.Logger, "@@[Client] Dispatcher {0} is {1} (before was {2})", dispatcherGuid, newStatus, oldStatus);
+			Logger.LogInfo("@@[Client] Dispatcher {0} is {1} (before was {2})", dispatcherGuid, newStatus, oldStatus);
 		}
 
 		public async Task<CallGraph<MethodDescriptor, LocationDescriptor>> GenerateCallGraphAsync()
 		{
-			Logger.LogS("SolutionAnalyzer", "GenerateCallGraphAsync", "Start building CG");
+			Logger.LogVerbose("SolutionAnalyzer", "GenerateCallGraphAsync", "Start building CG");
 			var callgraph = new CallGraph<MethodDescriptor, LocationDescriptor>();
 			var roots = await this.SolutionManager.GetRootsAsync(this.RootKind);
 			var worklist = new Queue<MethodDescriptor>(roots);
@@ -355,7 +355,7 @@ namespace OrleansClient.Analysis
 			{
 				var currentMethodDescriptor = worklist.Dequeue();
 				visited.Add(currentMethodDescriptor);
-				Logger.LogS("SolutionAnalyzer", "GenerateCallGraphAsync", "Proccesing  {0}", currentMethodDescriptor);
+				Logger.LogVerbose("SolutionAnalyzer", "GenerateCallGraphAsync", "Proccesing  {0}", currentMethodDescriptor);
 
 				var methodEntity = await this.SolutionManager.GetMethodEntityAsync(currentMethodDescriptor);
 				var calleesInfoForMethod = await methodEntity.GetCalleesInfoAsync();
@@ -367,7 +367,7 @@ namespace OrleansClient.Analysis
 
 					foreach (var calleeDescriptor in callees)
 					{
-						Logger.LogS("SolutionAnalyzer", "GenerateCallGraphAsync", "Adding {0}-{1} to CG", currentMethodDescriptor, calleeDescriptor);
+						Logger.LogVerbose("SolutionAnalyzer", "GenerateCallGraphAsync", "Adding {0}-{1} to CG", currentMethodDescriptor, calleeDescriptor);
 						callgraph.AddCallAtLocation(analysisNode.LocationDescriptor, currentMethodDescriptor, calleeDescriptor);
 
 						if (!visited.Contains(calleeDescriptor) && !worklist.Contains(calleeDescriptor))

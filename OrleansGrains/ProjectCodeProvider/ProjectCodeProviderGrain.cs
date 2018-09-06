@@ -35,7 +35,7 @@ namespace OrleansClient.Analysis
 		[NonSerialized]
         private IProjectCodeProvider projectCodeProvider;
 		[NonSerialized]
-		private ObserverSubscriptionManager<IEntityGrainObserverNotifications> observers;
+		private GrainObserverManager<IEntityGrainObserverNotifications> observers;
 
 		//private ProjectState State;
 
@@ -55,12 +55,11 @@ namespace OrleansClient.Analysis
 
 			await StatsHelper.RegisterActivation("ProjectCodeProviderGrain", this.GrainFactory);
 
-			Logger.OrleansLogger = this.GetLogger();
-            Logger.LogInfo(this.GetLogger(), "ProjectGrain", "OnActivate", "Enter");
+            Logger.LogInfo("ProjectGrain", "OnActivate", "Enter");
 
-            // Logger.LogWarning(this.GetLogger(), "ProjectGrain", "OnActivate", "Entering Project: {0}", this.GetPrimaryKeyString());
+            // Logger.LogWarning("ProjectGrain", "OnActivate", "Entering Project: {0}", this.GetPrimaryKeyString());
 
-            this.observers = new ObserverSubscriptionManager<IEntityGrainObserverNotifications>();
+            this.observers = new GrainObserverManager<IEntityGrainObserverNotifications>();
             this.State.AssemblyName = this.GetPrimaryKeyString();
 
 			//Task.Run(async () =>
@@ -96,12 +95,12 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "ProjectGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("ProjectGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-            Logger.LogInfo(this.GetLogger(), "ProjectGrain", "OnActivate", "Exit");
+            Logger.LogInfo("ProjectGrain", "OnActivate", "Exit");
         }
 
 		public override Task OnDeactivateAsync()
@@ -140,7 +139,7 @@ namespace OrleansClient.Analysis
 			//await StatsHelper.RegisterMsg("ProjectGrain::SetProjectPath", this.GrainFactory);
 			await StatsHelper.RegisterMsg("ProjectGrain::SetProjectPath:" + fullPath, this.GrainFactory);
 
-			Logger.LogInfo(this.GetLogger(), "ProjectGrain", "SetProjectPath", "Enter:" + fullPath);
+			Logger.LogInfo("ProjectGrain", "SetProjectPath", "Enter:" + fullPath);
 
             this.State.ProjectPath = fullPath;            
             this.State.AssemblyName = null;
@@ -165,19 +164,19 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "ProjectGrain", "SetProjectPath", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("ProjectGrain", "SetProjectPath", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 			
-            Logger.LogInfo(this.GetLogger(), "ProjectGrain", "SetProjectPath", "Exit");
+            Logger.LogInfo("ProjectGrain", "SetProjectPath", "Exit");
         }
 
         public async Task SetProjectSourceAsync(string source)
         {
 			await StatsHelper.RegisterMsg("ProjectGrain::SetProjectSource", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "ProjectGrain", "SetProjectSource", "Enter");
+			Logger.LogVerbose("ProjectGrain", "SetProjectSource", "Enter");
 
             this.State.Source = source;
             this.State.AssemblyName = TestConstants.ProjectAssemblyName;
@@ -202,19 +201,19 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "ProjectGrain", "SetProjectSource", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("ProjectGrain", "SetProjectSource", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-            Logger.LogVerbose(this.GetLogger(), "ProjectGrain", "SetProjectSource", "Exit");
+            Logger.LogVerbose("ProjectGrain", "SetProjectSource", "Exit");
         }
 
         public async Task SetProjectFromTestAsync(string testName)
         {
 			await StatsHelper.RegisterMsg("ProjectGrain::SetProjectFromTest", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "ProjectGrain", "SetProjectFromTest", "Enter");
+			Logger.LogVerbose("ProjectGrain", "SetProjectFromTest", "Enter");
 
             this.State.TestName = testName;
             this.State.AssemblyName = TestConstants.ProjectAssemblyName;
@@ -239,12 +238,12 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "ProjectGrain", "SetProjectFromTest", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("ProjectGrain", "SetProjectFromTest", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-            Logger.LogVerbose(this.GetLogger(), "ProjectGrain", "SetProjectFromTest", "Exit");
+            Logger.LogVerbose("ProjectGrain", "SetProjectFromTest", "Exit");
         }
 
         public Task<bool> IsSubtypeAsync(TypeDescriptor typeDescriptor1, TypeDescriptor typeDescriptor2)
@@ -253,7 +252,7 @@ namespace OrleansClient.Analysis
 
 			//if (GrainClient.IsInitialized)
 			//{
-			//	Logger.LogWarning(GrainClient.Logger, "ProjectGrain", "IsSubtypeAsync", "type1={0}, type2={1}", typeDescriptor1, typeDescriptor2);
+			//	Logger.LogWarning("ProjectGrain", "IsSubtypeAsync", "type1={0}, type2={1}", typeDescriptor1, typeDescriptor2);
 			//}
 
 			//Console.WriteLine("ProjectGrain::IsSubtypeAsync type1={0}, type2={1}", typeDescriptor1, typeDescriptor2);
@@ -295,7 +294,7 @@ namespace OrleansClient.Analysis
         {
 			StatsHelper.RegisterMsg("ProjectGrain::CreateMethodEntity", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "ProjectGrain", "CreateMethodEntity", "Enter");
+			Logger.LogVerbose("ProjectGrain", "CreateMethodEntity", "Enter");
 
 			var timer = new Stopwatch();
             timer.Start();
@@ -303,7 +302,7 @@ namespace OrleansClient.Analysis
             var result = this.projectCodeProvider.CreateMethodEntityAsync(methodDescriptor);
 
             timer.Stop();
-            Logger.LogInfo(this.GetLogger(), "ProjectGrain", "CreateMethodEntity:"+methodDescriptor, "Exit; took;{0};ms;{1};ticks", timer.ElapsedMilliseconds, timer.ElapsedTicks);
+            Logger.LogInfo("ProjectGrain", "CreateMethodEntity:"+methodDescriptor, "Exit; took;{0};ms;{1};ticks", timer.ElapsedMilliseconds, timer.ElapsedTicks);
             return result;
         }
 

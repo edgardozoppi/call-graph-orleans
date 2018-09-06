@@ -19,7 +19,7 @@ namespace OrleansClient.Analysis
 		[NonSerialized]
 		private ISolutionGrain solutionGrain;
 		[NonSerialized]
-		private ObserverSubscriptionManager<IAnalysisObserver> subscriptionManager;
+		private GrainObserverManager<IAnalysisObserver> subscriptionManager;
 		[NonSerialized]
 		private IDisposable timer;
 		[NonSerialized]
@@ -39,7 +39,7 @@ namespace OrleansClient.Analysis
 			this.solutionGrain = OrleansSolutionManager.GetSolutionGrain(this.GrainFactory);
 			this.effectsDispatcher = new OrleansEffectsDispatcherManager(this.GrainFactory, this.solutionGrain);
 
-			this.subscriptionManager = new ObserverSubscriptionManager<IAnalysisObserver>();
+			this.subscriptionManager = new GrainObserverManager<IAnalysisObserver>();
 
 			var streamProvider = this.GetStreamProvider(AnalysisConstants.StreamProvider);
 			var stream = streamProvider.GetStream<PropagationEffects>(this.GetPrimaryKey(), AnalysisConstants.StreamNamespace);
@@ -102,14 +102,14 @@ namespace OrleansClient.Analysis
 		{
 			await StatsHelper.RegisterMsg("EffectsDispatcherGrain::DispatchEffects", this.GrainFactory);
 
-			Logger.LogInfoForDebug(this.GetLogger(), "@@[Dispatcher {0}] Dequeuing effects", this.GetPrimaryKey());
+			Logger.LogInfo("@@[Dispatcher {0}] Dequeuing effects", this.GetPrimaryKey());
 
 			this.lastProcessingTime = DateTime.UtcNow;
 			this.isDispatchingEffects = true;
 
 			if (this.status != EffectsDispatcherStatus.Busy)
 			{
-				Logger.LogForRelease(this.GetLogger(), "@@[Dispatcher {0}] Becoming busy (before was {1})", this.GetPrimaryKey(), this.status);
+				Logger.LogInfo("@@[Dispatcher {0}] Becoming busy (before was {1})", this.GetPrimaryKey(), this.status);
 
 				var oldStatus = this.status;
 				this.status = EffectsDispatcherStatus.Busy;
@@ -134,13 +134,13 @@ namespace OrleansClient.Analysis
 
 		public Task OnCompletedAsync()
 		{
-			Logger.LogWarning(this.GetLogger(), "EffectsDispatcherGrain", "OnCompleted", "EffectsDispatcherGrain ID: {0}", this.GetPrimaryKey());
+			Logger.LogWarning("EffectsDispatcherGrain", "OnCompleted", "EffectsDispatcherGrain ID: {0}", this.GetPrimaryKey());
 			return Task.CompletedTask;
 		}
 
 		public Task OnErrorAsync(Exception ex)
 		{
-			Logger.LogWarning(this.GetLogger(), "EffectsDispatcherGrain", "OnError", "Exception: {0}", ex);
+			Logger.LogWarning("EffectsDispatcherGrain", "OnError", "Exception: {0}", ex);
 			return Task.CompletedTask;
 		}
 
@@ -148,7 +148,7 @@ namespace OrleansClient.Analysis
 		{
 			//await StatsHelper.RegisterMsg("EffectsDispatcherGrain::ForceDeactivation", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "EffectsDispatcherGrain", "ForceDeactivation", "force for {0} ", this.GetPrimaryKey());
+			Logger.LogVerbose("EffectsDispatcherGrain", "ForceDeactivation", "force for {0} ", this.GetPrimaryKey());
 			//await this.ClearStateAsync();
 
 			// Clear all fields before calling WriteStateAsync
@@ -188,7 +188,7 @@ namespace OrleansClient.Analysis
 			if (!this.isDispatchingEffects && this.status == EffectsDispatcherStatus.Inactive &&
 				idleTime.TotalMilliseconds > AnalysisConstants.DispatcherInactiveThreshold)
 			{
-				Logger.LogForRelease(this.GetLogger(), "@@[Dispatcher {0}] Was inactive for too long", this.GetPrimaryKey());
+				Logger.LogInfo("@@[Dispatcher {0}] Was inactive for too long", this.GetPrimaryKey());
 
 				// Notify that this dispatcher was inactive for too long.
 				this.subscriptionManager.Notify(s => s.OnEffectsDispatcherStatusChanged(this, this.status));
@@ -199,7 +199,7 @@ namespace OrleansClient.Analysis
 			if (!this.isDispatchingEffects && this.status == EffectsDispatcherStatus.Busy &&
 				idleTime.TotalMilliseconds > AnalysisConstants.DispatcherIdleThreshold)
 			{
-				Logger.LogForRelease(this.GetLogger(), "@@[Dispatcher {0}] Becoming idle (before was {1})", this.GetPrimaryKey(), this.status);
+				Logger.LogInfo("@@[Dispatcher {0}] Becoming idle (before was {1})", this.GetPrimaryKey(), this.status);
 
 				// Notify that this dispatcher is idle.
 				this.status = EffectsDispatcherStatus.Idle;

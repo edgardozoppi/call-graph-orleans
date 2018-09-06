@@ -41,10 +41,7 @@ namespace OrleansClient.Analysis
         {
             foreach (var method in rootMethods)
             {
-                if (GrainClient.IsInitialized)
-                {
-                    Logger.LogInfo(GrainClient.Logger, "Orchestrator", "AnalyzeDistributedAsync", "Analyzing: {0}", method);
-                }
+				Logger.LogInfo("Orchestrator", "AnalyzeDistributedAsync", "Analyzing: {0}", method);
 
                 var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method) as IMethodEntityGrain;
   
@@ -61,10 +58,8 @@ namespace OrleansClient.Analysis
             {
 				await Task.Delay(5000);
 				count = await solutionGrain.UpdateCounter(0);
-				if (GrainClient.IsInitialized)
-				{
-					Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeDistributedAsync", "Message Counter: {0}", count);
-				}
+
+				Logger.LogWarning("Orchestrator", "AnalyzeDistributedAsync", "Message Counter: {0}", count);
             }
 
             // await this.ProcessMessages();
@@ -72,10 +67,7 @@ namespace OrleansClient.Analysis
             // TODO: Remove these lines
             var reachableMethodsCount = await this.solutionManager.GetReachableMethodsCountAsync();
 
-            if (GrainClient.IsInitialized)
-            {
-                Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeDistributedAsync", "Reachable methods={0}", reachableMethodsCount);
-            }
+			Logger.LogWarning("Orchestrator", "AnalyzeDistributedAsync", "Reachable methods={0}", reachableMethodsCount);
 
             Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
         }
@@ -84,10 +76,7 @@ namespace OrleansClient.Analysis
 		{
 			foreach (var method in rootMethods)
 			{
-				if (GrainClient.IsInitialized)
-				{
-					Logger.LogInfo(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Analyzing: {0}", method);
-				}
+				Logger.LogInfo("Orchestrator", "AnalyzeAsync", "Analyzing: {0}", method);
 
 				//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 				var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(method);
@@ -119,7 +108,7 @@ namespace OrleansClient.Analysis
 			//
 			//if (GrainClient.IsInitialized)
 			//{
-			//	Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
+			//	Logger.LogWarning("Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
 			//}
 			//
 			//Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
@@ -137,7 +126,7 @@ namespace OrleansClient.Analysis
 			//
 			//	if (GrainClient.IsInitialized)
 			//	{
-			//		Logger.LogWarning(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
+			//		Logger.LogWarning("Orchestrator", "AnalyzeAsync", "Reachable methods={0}", reachableMethodsCount);
 			//	}
 			//
 			//	Console.WriteLine("Reachable methods={0}", reachableMethodsCount);
@@ -196,7 +185,7 @@ namespace OrleansClient.Analysis
 
 		//	if (!ready)
 		//	{
-		//		Logger.LogS("AnalysisOrchestator", "WaitForReady", "Method {0} not ready", method);
+		//		Logger.LogVerbose("AnalysisOrchestator", "WaitForReady", "Method {0} not ready", method);
 		//		await Task.Delay(millisecondsDelay);
 		//	}
 
@@ -224,10 +213,7 @@ namespace OrleansClient.Analysis
 		{
 			while (this.messageWorkList.Count > threshold)
 			{
-				if (GrainClient.IsInitialized)
-				{
-					Logger.LogWarning(GrainClient.Logger, "AnalysisOrchestator", "WaitQueue", "Size {0}", this.messageWorkList.Count);
-				}
+				Logger.LogWarning("AnalysisOrchestator", "WaitQueue", "Size {0}", this.messageWorkList.Count);
 
 				await ProcessMessages();
 				// await Task.Delay(millisecondsDelay);
@@ -238,7 +224,7 @@ namespace OrleansClient.Analysis
 
 		public async Task AnalyzeAsync(MethodDescriptor method, MethodDescriptor callee, AnalysisCallNode callNode, PropagationKind propKind)
 		{
-			Logger.LogS("AnalysisOrchestator", "AnalyzeAsync", "Analyzing {0} ", method);
+			Logger.LogVerbose("AnalysisOrchestator", "AnalyzeAsync", "Analyzing {0} ", method);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 			var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(method);
@@ -274,7 +260,7 @@ namespace OrleansClient.Analysis
 
 					if (messageWorkList.TryDequeue(out message))
 					{
-						// Logger.LogWarning(GrainClient.Logger, "Orchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
+						// Logger.LogWarning("Orchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
 
 						Debug.WriteLine("\n[Remove from worklist] {0}", message);
 
@@ -325,12 +311,9 @@ namespace OrleansClient.Analysis
 
 			//do
 			//{
-			//Logger.LogS("AnalysisOrchestator", "DoPropagationOfEffects", "");
+			//Logger.LogVerbose("AnalysisOrchestator", "DoPropagationOfEffects", "");
 
-			if (GrainClient.IsInitialized)
-			{
-				Logger.LogInfo(GrainClient.Logger, "Orchestrator", "PropagatEffFects", "Propagating effets computed in {0}", propagationEffects.SiloAddress);
-			}
+			Logger.LogInfo("Orchestrator", "PropagatEffFects", "Propagating effets computed in {0}", propagationEffects.SiloAddress);
 
 			await this.ProcessCalleesAsync(propagationEffects.CalleesInfo, propKind);
 
@@ -440,7 +423,7 @@ namespace OrleansClient.Analysis
 			var source = new MethodEntityDescriptor(callInfo.Caller);
 			var callerMessage = new CallerMessage(source, callMessageInfo);
 
-			//Logger.LogWarning(GrainClient.Logger, "Orchestrator", "CreateAndSendCallMsg", "Enqueuing: {0}", callee);
+			//Logger.LogWarning("Orchestrator", "CreateAndSendCallMsg", "Enqueuing: {0}", callee);
 
 			Debug.WriteLine("\t[Add to worklist] {0}", callerMessage);
 
@@ -463,12 +446,9 @@ namespace OrleansClient.Analysis
 		/// <returns></returns>
 		private async Task AnalyzeCalleeAsync(MethodDescriptor callee, CallerMessage callerMessage, PropagationKind propKind)
 		{
-			if (GrainClient.IsInitialized)
-			{
-				Logger.LogInfo(GrainClient.Logger, "Orchestrator", "AnalyzeCalleeAsync", "Analyzing: {0}", callee);
-			}
+			Logger.LogInfo("Orchestrator", "AnalyzeCalleeAsync", "Analyzing: {0}", callee);
 
-			//Logger.LogS("AnalysisOrchestator", "AnalyzeCalleeAsync", "Analyzing call to {0} ", callee);
+			//Logger.LogVerbose("AnalysisOrchestator", "AnalyzeCalleeAsync", "Analyzing call to {0} ", callee);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(callee);
 			var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(callee);
@@ -503,7 +483,7 @@ namespace OrleansClient.Analysis
 			//var propagationEffects = await methodEntityProc.PropagateAsync(callerMessage.CallMessageInfo);
 			//await this.PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
 
-			Logger.LogS("AnalysisOrchestator", "AnalyzeCalleeAsync", "End Analyzing call to {0} ", callee);
+			Logger.LogVerbose("AnalysisOrchestator", "AnalyzeCalleeAsync", "End Analyzing call to {0} ", callee);
 		}
 
 		private async Task ProcessReturnAsync(IEnumerable<ReturnInfo> callersInfo, PropagationKind propKind)
@@ -557,7 +537,7 @@ namespace OrleansClient.Analysis
 		/// <returns></returns>
 		private async Task AnalyzeReturnAsync(MethodDescriptor caller, CalleeMessage calleeMessage, PropagationKind propKind)
 		{
-			Logger.LogS("AnalysisOrchestator", "AnalyzeReturnAsync", "Analyzing return to {0} ", caller);
+			Logger.LogVerbose("AnalysisOrchestator", "AnalyzeReturnAsync", "Analyzing return to {0} ", caller);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(caller);
 			var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(caller);
@@ -592,7 +572,7 @@ namespace OrleansClient.Analysis
 			//var propagationEffects = await methodEntityProc.PropagateAsync(calleeMessage.ReturnMessageInfo);
 			//await this.PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
 
-			Logger.LogS("AnalysisOrchestator", "AnalyzeReturnAsync", "End Analyzing return to {0} ", caller);
+			Logger.LogVerbose("AnalysisOrchestator", "AnalyzeReturnAsync", "End Analyzing return to {0} ", caller);
 		}
 
 		private async Task<IMethodEntityWithPropagator> GetMethodEntityGrainAndActivateInProject(MethodDescriptor method)
@@ -747,10 +727,10 @@ namespace OrleansClient.Analysis
 
 			var totalMethodsCount = methodsRemoved.Count + methodsUpdated.Count + methodsAdded.Count;
 
-			Logger.Log("Removed methods: {0}", methodsRemoved.Count);
-			Logger.Log("Modified methods: {0}", methodsUpdated.Count);
-			Logger.Log("Added methods: {0}", methodsAdded.Count);
-			Logger.Log("Total methods: {0}", totalMethodsCount);
+			Logger.LogInfo("Removed methods: {0}", methodsRemoved.Count);
+			Logger.LogInfo("Modified methods: {0}", methodsUpdated.Count);
+			Logger.LogInfo("Added methods: {0}", methodsAdded.Count);
+			Logger.LogInfo("Total methods: {0}", totalMethodsCount);
 
 			Console.WriteLine("Removed methods: {0}", methodsRemoved.Count);
 			Console.WriteLine("Modified methods: {0}", methodsUpdated.Count);

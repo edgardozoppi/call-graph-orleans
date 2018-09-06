@@ -65,7 +65,7 @@ namespace OrleansClient.Analysis
 		{
 			foreach (var method in rootMethods)
 			{
-				//Logger.LogInfo(GrainClient.Logger, "Orchestrator", "AnalyzeAsync", "Analyzing: {0}", method);
+				//Logger.LogInfo("Orchestrator", "AnalyzeAsync", "Analyzing: {0}", method);
 		
 				var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 
@@ -92,8 +92,8 @@ namespace OrleansClient.Analysis
 
 					if (messageWorkList.TryDequeue(out message))
 					{
-						Logger.LogWarning(Logger.OrleansLogger, "SiloOrchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
-                        //Logger.LogS("Orchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
+						Logger.LogWarning("SiloOrchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
+                        //Logger.LogVerbose("Orchestrator", "ProcessMessage", "Deqeued: {0} Count: {1}", message, messageWorkList.Count);
 
 
 						if (message is CallerMessage)
@@ -122,7 +122,7 @@ namespace OrleansClient.Analysis
 
 		internal async Task PropagateEffectsAsync(PropagationEffects propagationEffects, PropagationKind propKind, IMethodEntityWithPropagator methodEntityProp = null)
 		{
-		    Logger.LogInfo(Logger.OrleansLogger, "SiloOrchestrator", "PropagatEffFects", "Propagating effets computed in {0}", propagationEffects.SiloAddress);
+		    Logger.LogInfo("SiloOrchestrator", "PropagatEffFects", "Propagating effets computed in {0}", propagationEffects.SiloAddress);
 
 			await this.ProcessCalleesAsync(propagationEffects.CalleesInfo, propKind);
 
@@ -214,7 +214,7 @@ namespace OrleansClient.Analysis
 			var source = new MethodEntityDescriptor(callInfo.Caller);
 			var callerMessage = new CallerMessage(source, callMessageInfo);
 
-			//Logger.LogWarning(GrainClient.Logger, "Orchestrator", "CreateAndSendCallMsg", "Enqueuing: {0}", callee);
+			//Logger.LogWarning("Orchestrator", "CreateAndSendCallMsg", "Enqueuing: {0}", callee);
             await this.solutionManager.UpdateCounter(1);
 			//await WaitQueue(QUEUE_THRESHOLD);
 			this.messageWorkList.Enqueue(callerMessage);
@@ -234,7 +234,7 @@ namespace OrleansClient.Analysis
 		/// <returns></returns>
 		private async Task AnalyzeCalleeAsync(MethodDescriptor callee, CallerMessage callerMessage, PropagationKind propKind)
 		{
-            //Logger.LogInfo(GrainClient.Logger, "Orchestrator", "AnalyzeCalleeAsync", "Analyzing: {0}", callee);
+            //Logger.LogInfo("Orchestrator", "AnalyzeCalleeAsync", "Analyzing: {0}", callee);
 
             var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(callee);
             var exit = false;
@@ -252,7 +252,7 @@ namespace OrleansClient.Analysis
             // var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(callee) as IMethodEntityGrain;
             //var propagationEffects = await methodEntityProc.PropagateAsync(callerMessage.CallMessageInfo);
             //await this.PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
-            Logger.LogS("AnalysisOrchestator", "AnalyzeCalleeAsync", "End Analyzing call to {0} ", callee);
+            Logger.LogVerbose("AnalysisOrchestator", "AnalyzeCalleeAsync", "End Analyzing call to {0} ", callee);
 		}
 
         private async Task<IMethodEntityGrain> GetMethodEntityGrainAndActivateInProject(MethodDescriptor method)
@@ -313,7 +313,7 @@ namespace OrleansClient.Analysis
 		/// <returns></returns>
 		private async Task AnalyzeReturnAsync(MethodDescriptor caller, CalleeMessage calleeMessage, PropagationKind propKind)
 		{
-			Logger.LogS("AnalysisOrchestator", "AnalyzeReturnAsync", "Analyzing return to {0} ", caller);
+			Logger.LogVerbose("AnalysisOrchestator", "AnalyzeReturnAsync", "Analyzing return to {0} ", caller);
 
             var methodEntityProc = await GetMethodEntityGrainAndActivateInProject(caller);
             var exit = false;
@@ -332,7 +332,7 @@ namespace OrleansClient.Analysis
             //var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(caller) as IMethodEntityGrain;
             //var propagationEffects = await methodEntityProc.PropagateAsync(calleeMessage.ReturnMessageInfo);
             //await this.PropagateEffectsAsync(propagationEffects, propKind, methodEntityProc);
-            Logger.LogS("AnalysisOrchestator", "AnalyzeReturnAsync", "End Analyzing return to {0} ", caller);
+            Logger.LogVerbose("AnalysisOrchestator", "AnalyzeReturnAsync", "End Analyzing return to {0} ", caller);
 		}
 	}
 }

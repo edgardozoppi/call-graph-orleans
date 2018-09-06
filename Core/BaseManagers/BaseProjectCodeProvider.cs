@@ -310,7 +310,7 @@ namespace OrleansClient.Analysis
 				}
 				else
 				{
-					Logger.LogS("BaseProjectCodeProvider", "FindMethodImplementationAsync", "Cannot find implementation for method {0}", methodDescriptor);
+					Logger.LogVerbose("BaseProjectCodeProvider", "FindMethodImplementationAsync", "Cannot find implementation for method {0}", methodDescriptor);
 				}
 			}
 

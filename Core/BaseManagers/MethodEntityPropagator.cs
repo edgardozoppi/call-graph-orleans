@@ -95,7 +95,7 @@ namespace OrleansClient.Analysis
 
 		private async Task<PropagationEffects> InternalPropagateAsync(PropagationKind propKind)
 		{
-			//Logger.LogS("MethodEntityProp", "PropagateAsync", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
+			//Logger.LogVerbose("MethodEntityProp", "PropagateAsync", "Propagation for {0} ", this.methodEntity.MethodDescriptor);
 			//Logger.Log("Propagating {0} to {1}", this.methodEntity.MethodDescriptor, propKind);
 
 			// var codeProvider = await ProjectGrainWrapper.CreateProjectGrainWrapperAsync(this.methodEntity.MethodDescriptor);
@@ -120,7 +120,7 @@ namespace OrleansClient.Analysis
 			this.methodEntity.PropGraph.RemoveAddedTypes();
 			this.methodEntity.PropGraph.RemoveDeletedTypes();
 
-			Logger.LogS("MethodEntityGrain", "PropagateAsync", "End Propagation for {0} ", this.methodEntity.MethodDescriptor);
+			Logger.LogVerbose("MethodEntityGrain", "PropagateAsync", "End Propagation for {0} ", this.methodEntity.MethodDescriptor);
 			//this.methodEntity.Save(@"C:\Temp\"+this.methodEntity.MethodDescriptor.MethodName + @".dot");
 
 			//if (propagationEffects.CalleesInfo.Count > 100)
@@ -282,7 +282,7 @@ namespace OrleansClient.Analysis
 		{
 			this.methodEntity.PropGraph.ResetUpdateCount();
 
-			Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "Propagation for {0} ", callMessageInfo.Callee);
+			Logger.LogVerbose("MethodEntityGrain", "PropagateAsync-call", "Propagation for {0} ", callMessageInfo.Callee);
 
 			if (!this.methodEntity.CanBeAnalized)
 			{
@@ -337,7 +337,7 @@ namespace OrleansClient.Analysis
 			}
 
 			var effects = await InternalPropagateAsync(callMessageInfo.PropagationKind);
-			Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "End Propagation for {0} ", callMessageInfo.Callee);
+			Logger.LogVerbose("MethodEntityGrain", "PropagateAsync-call", "End Propagation for {0} ", callMessageInfo.Callee);
 			return effects;
 		}
 
@@ -345,7 +345,7 @@ namespace OrleansClient.Analysis
 		{
 			this.methodEntity.PropGraph.ResetUpdateCount();
 
-			Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "Propagation for {0} ", returnMessageInfo.Caller);
+			Logger.LogVerbose("MethodEntityGrain", "PropagateAsync-return", "Propagation for {0} ", returnMessageInfo.Caller);
 			//PropGraph.Add(lhs, retValues);
 
 			if (returnMessageInfo.LHS != null)
@@ -357,7 +357,7 @@ namespace OrleansClient.Analysis
 
 			/// We need to recompute possible calless 
 			var effects = await InternalPropagateAsync(returnMessageInfo.PropagationKind);
-			Logger.LogS("MethodEntityGrain", "PropagateAsync-return", "End Propagation for {0} ", returnMessageInfo.Caller);
+			Logger.LogVerbose("MethodEntityGrain", "PropagateAsync-return", "End Propagation for {0} ", returnMessageInfo.Caller);
 
 			//if (returnMessageInfo.PropagationKind == PropagationKind.REMOVE_TYPES)
 			//{

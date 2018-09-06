@@ -31,7 +31,7 @@ namespace OrleansClient.Analysis
 
 		public async Task ProcessMethodAsync(MethodDescriptor method)
 		{
-			Logger.LogS("EffectsDispatcherManager", "ProcessMethod", "Analyzing: {0}", method);
+			Logger.LogVerbose("EffectsDispatcherManager", "ProcessMethod", "Analyzing: {0}", method);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(method);
 			var methodEntityProc = await this.GetMethodEntityGrainAndActivateInProject(method);
@@ -39,12 +39,12 @@ namespace OrleansClient.Analysis
 			await methodEntityProc.UseDeclaredTypesForParameters();
 			await methodEntityProc.PropagateAndProcessAsync(PropagationKind.ADD_TYPES);
 
-			Logger.LogS("EffectsDispatcherManager", "ProcessMethod", "End Analyzing {0} ", method);
+			Logger.LogVerbose("EffectsDispatcherManager", "ProcessMethod", "End Analyzing {0} ", method);
 		}
 
 		public async Task DispatchEffectsAsync(PropagationEffects effects)
 		{
-			Logger.LogS("EffectsDispatcherManager", "DispatchEffects", "Propagating effects computed in {0}", effects.SiloAddress);
+			Logger.LogVerbose("EffectsDispatcherManager", "DispatchEffects", "Propagating effects computed in {0}", effects.SiloAddress);
 
 			await this.ProcessCalleesAsync(effects.CalleesInfo, effects.Kind);
 
@@ -108,14 +108,14 @@ namespace OrleansClient.Analysis
 
 		private async Task AnalyzeCalleeAsync(MethodDescriptor callee, CallerMessage callerMessage, PropagationKind propKind)
 		{
-			Logger.LogS("EffectsDispatcherManager", "AnalyzeCallee", "Analyzing: {0}", callee);
+			Logger.LogVerbose("EffectsDispatcherManager", "AnalyzeCallee", "Analyzing: {0}", callee);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(callee);
 			var methodEntityProc = await this.GetMethodEntityGrainAndActivateInProject(callee);
 
 			await methodEntityProc.PropagateAndProcessAsync(callerMessage.CallMessageInfo);
 
-			Logger.LogS("EffectsDispatcherManager", "AnalyzeCallee", "End Analyzing call to {0} ", callee);
+			Logger.LogVerbose("EffectsDispatcherManager", "AnalyzeCallee", "End Analyzing call to {0} ", callee);
 		}
 
 		private async Task ProcessReturnAsync(IEnumerable<ReturnInfo> callersInfo, PropagationKind propKind)
@@ -153,14 +153,14 @@ namespace OrleansClient.Analysis
 
 		private async Task AnalyzeReturnAsync(MethodDescriptor caller, CalleeMessage calleeMessage, PropagationKind propKind)
 		{
-			Logger.LogS("EffectsDispatcherManager", "AnalyzeReturn", "Analyzing return to {0} ", caller);
+			Logger.LogVerbose("EffectsDispatcherManager", "AnalyzeReturn", "Analyzing return to {0} ", caller);
 
 			//var methodEntityProc = await this.solutionManager.GetMethodEntityAsync(caller);
 			var methodEntityProc = await this.GetMethodEntityGrainAndActivateInProject(caller);
 
 			await methodEntityProc.PropagateAndProcessAsync(calleeMessage.ReturnMessageInfo);
 
-			Logger.LogS("EffectsDispatcherManager", "AnalyzeReturn", "End Analyzing return to {0} ", caller);
+			Logger.LogVerbose("EffectsDispatcherManager", "AnalyzeReturn", "End Analyzing return to {0} ", caller);
 		}
 
 		private Task<IMethodEntityGrain> GetMethodEntityGrainAndActivateInProject(MethodDescriptor method)

@@ -55,8 +55,7 @@ namespace OrleansClient.Analysis
 
 			await StatsHelper.RegisterActivation("SolutionGrain", this.GrainFactory);
 
-			Logger.OrleansLogger = this.GetLogger();
-            Logger.LogInfo(this.GetLogger(), "SolutionGrain", "OnActivate","Enter");
+            Logger.LogInfo("SolutionGrain", "OnActivate","Enter");
 			
 			this.projectsReadyCount = 0;
 
@@ -88,12 +87,12 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "SolutionGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("SolutionGrain", "OnActivate", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-			Logger.LogInfo(this.GetLogger(), "SolutionGrain", "OnActivate", "Exit");
+			Logger.LogInfo("SolutionGrain", "OnActivate", "Exit");
 		}
 
 		public override Task OnDeactivateAsync()
@@ -105,20 +104,20 @@ namespace OrleansClient.Analysis
 
 		public async Task StartObservingAsync(IObservableEntityGrain target)
 		{
-			//Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "StartObserving", "Enter");
+			//Logger.LogVerbose("SolutionGrain", "StartObserving", "Enter");
 
 			await target.AddObserverAsync(this);
 
-			//Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "StartObserving", "Exit");
+			//Logger.LogVerbose("SolutionGrain", "StartObserving", "Exit");
 		}
 
 		public async Task StopObservingAsync(IObservableEntityGrain target)
 		{
-			//Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "StopObserving", "Enter");
+			//Logger.LogVerbose("SolutionGrain", "StopObserving", "Enter");
 
 			await target.RemoveObserverAsync(this);
 
-			//Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "StopObserving", "Exit");
+			//Logger.LogVerbose("SolutionGrain", "StopObserving", "Exit");
 		}
 
 		public void OnStatusChanged(IObservableEntityGrain sender, EntityGrainStatus newState)
@@ -143,7 +142,7 @@ namespace OrleansClient.Analysis
         {
 			await StatsHelper.RegisterMsg("SolutionGrain::SetSolutionPath", this.GrainFactory);
 
-			Logger.LogInfo(this.GetLogger(), "SolutionGrain", "SetSolutionPath", "Enter");
+			Logger.LogInfo("SolutionGrain", "SetSolutionPath", "Enter");
 
             this.State.SolutionPath = solutionPath;
 			this.State.Source = null;
@@ -166,19 +165,19 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "SolutionGrain", "SetSolutionPath", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("SolutionGrain", "SetSolutionPath", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-			Logger.LogInfo(this.GetLogger(), "SolutionGrain", "SetSolutionPath", "Exit");
+			Logger.LogInfo("SolutionGrain", "SetSolutionPath", "Exit");
 		}
 
         public async Task SetSolutionSourceAsync(string source)
         {
 			await StatsHelper.RegisterMsg("SolutionGrain::SetSolutionSource", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "SetSolutionSource", "Enter");
+			Logger.LogVerbose("SolutionGrain", "SetSolutionSource", "Enter");
 
             this.State.Source = source;
 			this.State.SolutionPath = null;
@@ -201,19 +200,19 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "SolutionGrain", "SetSolutionSource", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("SolutionGrain", "SetSolutionSource", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-            Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "SetSolutionSource", "Exit");
+            Logger.LogVerbose("SolutionGrain", "SetSolutionSource", "Exit");
         }
 
 		public async Task SetSolutionFromTestAsync(string testName)
 		{
 			await StatsHelper.RegisterMsg("SolutionGrain::SetSolutionFromTest", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "SetSolutionFromTest", "Enter");
+			Logger.LogVerbose("SolutionGrain", "SetSolutionFromTest", "Enter");
 
 			this.State.TestName = testName;
 			this.State.SolutionPath = null;
@@ -236,12 +235,12 @@ namespace OrleansClient.Analysis
 					var inner = ex;
 					while (inner is AggregateException) inner = inner.InnerException;
 
-					Logger.LogError(this.GetLogger(), "SolutionGrain", "SetSolutionFromTest", "Error:\n{0}\nInner:\n{1}", ex, inner);
+					Logger.LogError("SolutionGrain", "SetSolutionFromTest", "Error:\n{0}\nInner:\n{1}", ex, inner);
 					throw ex;
 				}
 			//});
 
-			Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "SetSolutionFromTest", "Exit");
+			Logger.LogVerbose("SolutionGrain", "SetSolutionFromTest", "Exit");
 		}
 
 		public Task<IProjectCodeProvider> GetProjectCodeProviderAsync(string assemblyName)
@@ -284,13 +283,13 @@ namespace OrleansClient.Analysis
         {
 			await StatsHelper.RegisterMsg("SolutionGrain::GetRoots", this.GrainFactory);
 
-			Logger.LogVerbose(this.GetLogger(), "SolutionGrain", "GetRoots", "Enter");
+			Logger.LogVerbose("SolutionGrain", "GetRoots", "Enter");
 		
 			var sw = new Stopwatch();
 			sw.Start();
             var roots = await this.solutionManager.GetRootsAsync(rootKind);
 
-			Logger.LogInfo(this.GetLogger(), "SolutionGrain", "GetRoots", "End Time elapsed {0}", sw.Elapsed);
+			Logger.LogInfo("SolutionGrain", "GetRoots", "End Time elapsed {0}", sw.Elapsed);
 			
 			return roots; 
         }

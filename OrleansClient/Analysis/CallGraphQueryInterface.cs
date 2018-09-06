@@ -89,12 +89,8 @@ namespace OrleansClient.Analysis
             timer.Stop();
             var timeMS = timer.ElapsedMilliseconds;
             var ticks = timer.ElapsedTicks;
-			if (GrainClient.IsInitialized)
-			{
-				Orleans.Runtime.Logger log = GrainClient.Logger;
 
-				Logger.LogVerbose(log, "", "Measure", "{0}: {1} ms, {2} ticks", label, timeMS, ticks);
-			}
+			Logger.LogVerbose("", "Measure", "{0}: {1} ms, {2} ticks", label, timeMS, ticks);
 
             //Debug.WriteLine("{0}: {1} ms, {2} ticks", label, timeMS, ticks);
             timer.Reset();

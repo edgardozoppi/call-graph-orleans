@@ -28,7 +28,7 @@ namespace OrleansClient
 
 		internal async Task<bool> DiffPropAsync(IEnumerable<TypeDescriptor> src, string edge, PropGraphNodeDescriptor n, PropagationKind propKind)
 		{
-			Logger.LogS("PropagationGraph", "DiffPropAsync", "Diff({0},{1})", src, n);
+			Logger.LogVerbose("PropagationGraph", "DiffPropAsync", "Diff({0},{1})", src, n);
 
 			if (propKind == PropagationKind.REMOVE_TYPES || propKind == PropagationKind.REMOVE_ASSIGNMENT)
 			{

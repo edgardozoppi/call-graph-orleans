@@ -12,17 +12,24 @@ using System.Threading.Tasks;
 
 namespace OrleansClient
 {
+	public enum LogSeverity
+	{
+		Verbose,
+		Info,
+		Warning,
+		Error
+	}
+
 	sealed public class Logger
 	{
 		private static readonly object syncObject = new object();
-		private string filename;
 		private static Logger instance;
-		// private static Orleans.Runtime.Logger.Severity level = Orleans.Runtime.Logger.Severity.Info;
-		public static Orleans.Runtime.Logger OrleansLogger;
+
+		private string _filename;
 
 		public Logger(string filename)
 		{
-			this.filename = filename;
+			_filename = filename;
 			File.Delete(filename);
 		}
 
@@ -43,164 +50,74 @@ namespace OrleansClient
 			}
         }
 
-        public static void LogVerbose(Orleans.Runtime.Logger orleansLog, string type, string method, string format, params object[] arguments)
+        public static void LogVerbose(string type, string method, string format, params object[] arguments)
         {
 #if DEBUG
-			if (orleansLog.IsVerbose)
-			{
-				var message = string.Format(format, arguments);
-				var threadId = Thread.CurrentThread.ManagedThreadId;
-
-				message = string.Format("[{0}] {1}::{2}: {3}", threadId, type, method, message);
-				//Trace.TraceInformation(message);
-				// Debug.WriteLine(message);
-				//Console.WriteLine(message);
-				orleansLog.TrackTrace(message, Severity.Verbose);
-			}
+			Instance.Log(LogSeverity.Verbose, type, method, format, arguments);
 #endif
 		}
 
-        public static void LogWarning(Orleans.Runtime.Logger orleansLog, string type, string method, string format, params object[] arguments)
+        public static void LogWarning(string type, string method, string format, params object[] arguments)
         {
 #if DEBUG
-			var message = string.Format(format, arguments);
-            var threadId = Thread.CurrentThread.ManagedThreadId;
-
-            message = string.Format("[{0}] {1}::{2}: {3}", threadId, type, method, message);
-            //Trace.TraceInformation(message);
-            // Debug.WriteLine(message);
-            Console.WriteLine(message);
-            orleansLog.Warn(0, message);
+			Instance.Log(LogSeverity.Warning, type, method, format, arguments);
 #endif
 		}
 
-        public static void LogError(Orleans.Runtime.Logger orleansLog, string type, string method, string format, params object[] arguments)
+		public static void LogError(string type, string method, string format, params object[] arguments)
         {
-            var message = string.Format(format, arguments);
-            var threadId = Thread.CurrentThread.ManagedThreadId;
+			Instance.Log(LogSeverity.Error, type, method, format, arguments);
+		}
 
-            message = string.Format("[{0}] {1}::{2}: {3}", threadId, type, method, message);
-            //Trace.TraceInformation(message);
-            // Debug.WriteLine(message);
-            //Console.WriteLine(message);
-            orleansLog.Error(0, message);
-        }
+		public static void LogInfo(string type, string method, string format, params object[] arguments)
+		{
+#if DEBUG
+			Instance.Log(LogSeverity.Info, type, method, format, arguments);
+#endif
+		}
 
-        public static void LogInfo(Orleans.Runtime.Logger orleansLog, string type, string method, string format, params object[] arguments)
+		public static void LogInfo(string format, params object[] arguments)
 		{
 #if DEBUG
 			var message = string.Format(format, arguments);
+
+			Instance.Log(LogSeverity.Info, message);
+#endif
+		}
+
+		public void Log(LogSeverity severity, string type, string method, string format, params object[] arguments)
+		{
+#if DEBUG
 			var threadId = Thread.CurrentThread.ManagedThreadId;
-
-			message = string.Format("[{0}]{1}::{2}: {3}", threadId, type, method, message);
-
-			//Trace.TraceInformation(message);
-			// Debug.WriteLine(message);
-			//Console.WriteLine(message);
-			orleansLog.Info(0, message);
-#endif
-		}
-
-		public static void LogForRelease(Orleans.Runtime.Logger orleansLog, string format, params object[] arguments)
-		{
-			orleansLog.Warn(0, format, arguments);
-		}
-
-		public static void LogForDebug(Orleans.Runtime.Logger orleansLog, string format, params object[] arguments)
-		{
-#if DEBUG
-			orleansLog.Warn(0, format, arguments);
-#endif
-		}
-
-		public static void LogInfoForDebug(Orleans.Runtime.Logger orleansLog, string format, params object[] arguments)
-		{
-#if DEBUG
-			orleansLog.Info(0, format, arguments);
-#endif
-		}
-
-		public static void LogS(string type, string method, string format, params object[] arguments)
-        {
-			if (OrleansLogger != null)
-			{
-				LogVerbose(OrleansLogger, type, method, format, arguments);
-			}
-			else 
-			{
-				Instance.Log(type, method, format, arguments);
-			}
-        }
-
-		//public static async Task LogToFile(string format, params object[] arguments)
-		//{
-		//	var retryCount = 0;
-
-		//	do
-		//	{
-		//		try
-		//		{
-		//			var message = string.Format(format, arguments);
-
-		//			using (var writer = File.AppendText(@"C:\temp\debug.log"))
-		//			{
-		//				await writer.WriteLineAsync(message);
-		//			}
-
-		//			break;
-		//		}
-		//		catch
-		//		{
-		//			await Task.Delay(10);
-		//			retryCount++;
-		//		}
-		//	}
-		//	while (retryCount < 3);
-		//}
-
-		public static void Log(string format, params object[] arguments)
-		{
-#if DEBUG
 			var message = string.Format(format, arguments);
 
-			//Trace.TraceInformation(message);
-			Debug.WriteLine(message);
-			//Console.WriteLine(message);
+			message = string.Format("{0}[{1}] {2}::{3}: {4}", DateTime.UtcNow, threadId, type, method, message);
+			Log(severity, message);
 #endif
 		}
 
-		public void Log(string type, string method, string format, params object[] arguments)
+		private void Log(LogSeverity severity, string message)
 		{
-#if DEBUG
-			var message = string.Format(format, arguments);
-			var threadId = Thread.CurrentThread.ManagedThreadId;
+			if (severity >= LogSeverity.Warning)
+			{
+				//Debug.WriteLine(message);
+				Console.WriteLine(message);
+			}
 
-			message = string.Format("[{0}] {1}::{2}: {3}", threadId, type, method, message);
-
-			//Debug.WriteLine(message);
-			//Console.WriteLine(message);
-			/*
 			lock (syncObject)
-            {
-                try
-                {
-                    using (var writer = File.AppendText(filename))
-                    {
-                        writer.WriteLine(message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine("Error writing log");
-                }
+			{
+				try
+				{
+					using (var writer = File.AppendText(_filename))
+					{
+						writer.WriteLine(message);
+					}
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine("Error writing log");
+				}
 			}
-             */
-#endif
-		}
-
-		public void Log(string type, string method, object argument)
-		{
-			this.Log(type, method, "{0}", argument);
 		}
 	}
 }

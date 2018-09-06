@@ -174,8 +174,8 @@ namespace WebSite
 				//this.TextBox1.Text = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
 				this.TextBox1.Text = string.Format("Running test {0}.", testName);
 
-				//Logger.LogInfo(GrainClient.Logger, "Stats", "Query", "Analyzing {0} took:{1} ms", testName, results.ElapsedTime);
-				Logger.LogInfo(GrainClient.Logger, "Stats", "Query", "Analyzing {0}.", testName);
+				//Logger.LogInfo("Stats", "Query", "Analyzing {0} took:{1} ms", testName, results.ElapsedTime);
+				Logger.LogInfo("Stats", "Query", "Analyzing {0}.", testName);
 
                 //var result = await analysisClient.ComputeRandomQueries(className, methodPrejix, numberOfMethods, repetitions);
 
@@ -249,7 +249,7 @@ namespace WebSite
 					string calleesStr = String.Join("\n", result);
 					TextBox1.Text = String.Format("Callees:{0} \nTime:{1}", calleesStr,stopWatch.ElapsedMilliseconds);
 
-					Logger.LogInfo(GrainClient.Logger,"Stats","Query","Callees of {0} :{1} \nTime:{2}", methodDescriptor, calleesStr,stopWatch.ElapsedMilliseconds);
+					Logger.LogInfo("Stats","Query","Callees of {0} :{1} \nTime:{2}", methodDescriptor, calleesStr,stopWatch.ElapsedMilliseconds);
 
 					// System.Diagnostics.Trace.TraceInformation("Callees of {0} :{1} \nTime:{2}", methodDescriptor, calleesStr,stopWatch.ElapsedMilliseconds);
 					//var solutionManager = analysisClient.SolutionManager as ISolutionGrain;
@@ -291,7 +291,7 @@ namespace WebSite
 
                     TextBox1.Text = string.Format("Random Query times; Avg; {0}; Min {1}; Max; {2}", avgTime, minTime, maxTime);
                     System.Diagnostics.Trace.TraceInformation("Random Query times; Avg; {0}; Min {1}; Max; {2}", avgTime, minTime, maxTime);
-                    Logger.LogInfo(GrainClient.Logger, "Stats", "Random Query times; ", "Avg; {0}; Min {1}; Max; {2}", avgTime, minTime, maxTime);
+                    Logger.LogInfo("Stats", "Random Query times; ", "Avg; {0}; Min {1}; Max; {2}", avgTime, minTime, maxTime);
                 }
                 catch (Exception exc)
                 {

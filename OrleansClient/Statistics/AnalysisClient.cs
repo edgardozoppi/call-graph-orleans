@@ -51,7 +51,7 @@ namespace OrleansClient.Statistics
     {
 		private const long SYSTEM_MANAGEMENT_ID = 1;
 
-		private static AnalysisClient instance;
+		private static AnalysisClient _instance;
 
 		private IManagementGrain systemManagement;
 		private CloudTable analysisTimes;
@@ -122,9 +122,10 @@ namespace OrleansClient.Statistics
 		{
 			get
 			{
-				if (AnalysisClient.instance != null)
+				if (_instance != null)
 				{
-					return AnalysisClient.instance.GetCurrentAnalyzedMethodsCount(GrainClient.GrainFactory);
+					var grainClient = new ClientBuilder().Build();
+					return _instance.GetCurrentAnalyzedMethodsCount(grainClient);
 				}
 
 				return Task.FromResult(0L);
@@ -135,9 +136,10 @@ namespace OrleansClient.Statistics
 		{
 			get
 			{
-				if (AnalysisClient.instance != null)
+				if (_instance != null)
 				{
-					return AnalysisClient.instance.GetLastMessage(GrainClient.GrainFactory);
+					var grainClient = new ClientBuilder().Build();
+					return _instance.GetLastMessage(grainClient);
 				}
 
 				return Task.FromResult("");
@@ -165,7 +167,7 @@ namespace OrleansClient.Statistics
 
 		public async Task StartRunningExperiment(IGrainFactory grainFactory, string expId = "DummyExperimentID", AnalysisRootKind rootKind = AnalysisRootKind.Default)
 		{
-			AnalysisClient.instance = this;
+			_instance = this;
 			//Task.Run(async () =>
 			await Task.Factory.StartNew(async () =>
 			{
@@ -180,7 +182,7 @@ namespace OrleansClient.Statistics
 				this.ExperimentID = expId;
 
 				// await systemManagement.ForceActivationCollection(System.TimeSpan.MaxValue);
-				AnalysisClient.ErrorMessage = "OK so far";
+				ErrorMessage = "OK so far";
 
                 var myStatsGrain = StatsHelper.GetStatGrain(grainFactory);
                 await myStatsGrain.ResetStats();
@@ -203,7 +205,7 @@ namespace OrleansClient.Statistics
 #endif
                 this.stopWatch = Stopwatch.StartNew();
 
-                AnalysisClient.ExperimentStatus = ExperimentStatus.Compiling;
+				ExperimentStatus = ExperimentStatus.Compiling;
 
                 this.analyzer.RootKind = rootKind;
                 await this.analyzer.InitializeOnDemandOrleansAnalysis();
@@ -211,17 +213,17 @@ namespace OrleansClient.Statistics
 
                 var compilationElapsedTime = stopWatch.ElapsedMilliseconds;
 
-                if (AnalysisClient.ExperimentStatus == ExperimentStatus.Cancelled)
+                if (ExperimentStatus == ExperimentStatus.Cancelled)
                 {
-                    AnalysisClient.ErrorMessage = "Cancelled by user";
+					ErrorMessage = "Cancelled by user";
                     return;
                 }
 
-                AnalysisClient.ExperimentStatus = ExperimentStatus.Running;
+				ExperimentStatus = ExperimentStatus.Running;
 
                 await this.analyzer.ContinueOnDemandOrleansAnalysis();
 
-                AnalysisClient.ExperimentStatus = ExperimentStatus.ComputingResults;
+				ExperimentStatus = ExperimentStatus.ComputingResults;
 
                 this.stopWatch.Stop();
 #if COMPUTE_STATS
@@ -329,14 +331,22 @@ namespace OrleansClient.Statistics
 
                 var totalMessages = 0;
                 var clientMessages = 0;
-                for(int i = 0; i<this.machines; i++)
+
+                for(int i = 0; i < this.machines; i++)
                 {
-                    if (maxPerSiloMemoryUsage < orleansStats[i].MemoryUsage)
-                    {
-                        maxPerSiloMemoryUsage = orleansStats[i].MemoryUsage;
-                    }
-                    acummulatedPerSiloMemoryUsage += orleansStats[i].MemoryUsage;
+					var memoryUsage = orleansStats[i].MemoryUsage;
+
+					if (memoryUsage.HasValue)
+					{
+						if (maxPerSiloMemoryUsage < memoryUsage)
+						{
+							maxPerSiloMemoryUsage = memoryUsage.Value;
+						}
+
+						acummulatedPerSiloMemoryUsage += memoryUsage.Value;
+					}
                 }
+
                 var silosSize = this.machines; // hosts.Keys.Count;
 
 #endif
@@ -375,20 +385,20 @@ namespace OrleansClient.Statistics
                 // Save results in main table
                 this.AddSubjetResults(results);
 
-                //SaveResults(@"Y:\");
+				//SaveResults(@"Y:\");
 
-                AnalysisClient.ExperimentStatus = ExperimentStatus.Ready;
-                AnalysisClient.ErrorMessage = "OK";
-                Logger.LogWarning(GrainClient.Logger, "AnalysisClient", "RunExperiment", "Finished OK");
+				ExperimentStatus = ExperimentStatus.Ready;
+				ErrorMessage = "OK";
+                Logger.LogWarning("AnalysisClient", "RunExperiment", "Finished OK");
             }
             catch (Exception ex)
             {
                 var innerEx = ex;
                 while (innerEx is AggregateException) innerEx = innerEx.InnerException;
-                AnalysisClient.ErrorMessage = "Error connecting to Orleans: " + innerEx + " at " + DateTime.Now;
+				ErrorMessage = "Error connecting to Orleans: " + innerEx + " at " + DateTime.Now;
 
-                AnalysisClient.ExperimentStatus = ExperimentStatus.Failed;
-                Logger.LogError(GrainClient.Logger, "AnalysisClient", "RunExperiment", "Finished with ERRORS {0}",ex);
+				ExperimentStatus = ExperimentStatus.Failed;
+                Logger.LogError("AnalysisClient", "RunExperiment", "Finished with ERRORS {0}",ex);
 
                 throw ex;
             }
@@ -443,7 +453,7 @@ namespace OrleansClient.Statistics
 
         public static Task CancelExperimentAsync()
         {
-            AnalysisClient.ExperimentStatus = ExperimentStatus.Cancelled;
+			ExperimentStatus = ExperimentStatus.Cancelled;
             return Task.CompletedTask;
         }
 
@@ -846,8 +856,8 @@ namespace OrleansClient.Statistics
 				Time = time,
                 Machines = machines,
 				Address = siloAddr.ToString(), 
-				CPU = siloMetric.CpuUsage,
-				MemoryUsage = siloMetric.MemoryUsage,
+				CPU = siloMetric.CpuUsage ?? 0,
+				MemoryUsage = siloMetric.MemoryUsage ?? 0,
 				//Activations = siloMetric.ActivationCount,
 				Activations = siloComputedStat.TotalActivations,
 				RecentlyUsedActivations = siloMetric.RecentlyUsedActivationCount,

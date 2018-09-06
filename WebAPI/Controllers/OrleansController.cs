@@ -51,8 +51,9 @@ namespace WebAPI
 				solutionPath = Path.Combine(OrleansController.ROOT_DIR, solutionToTest);
 			}
 
+			var grainClient = new ClientBuilder().Build();
 			OrleansController.solutionPath = solutionPath;
-			OrleansController.analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
+			OrleansController.analyzer = SolutionAnalyzer.CreateFromSolution(grainClient, solutionPath);
 			await analyzer.AnalyzeAsync(strategyKind);
 
 			// This call is to fill the documentsAssemblyName mapping

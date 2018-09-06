@@ -23,12 +23,13 @@ namespace WebAPI
 
             try
             {
-                var analyzer = SolutionAnalyzer.CreateFromTest(GrainClient.Instance, testName);
+				var grainClient = new ClientBuilder().Build();
+                var analyzer = SolutionAnalyzer.CreateFromTest(grainClient, testName);
                 var analysisClient = new AnalysisClient(analyzer, machines);
 
 				//var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-				analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
+				analysisClient.StartRunningExperiment(grainClient, expID, Utils.ToAnalysisRootKind(rootKind));
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 				//result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
@@ -55,12 +56,13 @@ namespace WebAPI
                     expID = solutionName;
                 }
                 solutionPath = Path.Combine(drive + ":\\" + solutionPath, solutionName + ".sln");
-                var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
+				var grainClient = new ClientBuilder().Build();
+				var analyzer = SolutionAnalyzer.CreateFromSolution(grainClient, solutionPath);
                 var analysisClient = new AnalysisClient(analyzer, machines);
 
 				//var results = await analysisClient.RunExperiment(GrainClient.GrainFactory, expID);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-				analysisClient.StartRunningExperiment(GrainClient.GrainFactory, expID, Utils.ToAnalysisRootKind(rootKind));
+				analysisClient.StartRunningExperiment(grainClient, expID, Utils.ToAnalysisRootKind(rootKind));
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 				//result = string.Format("Ready for queries. Time: {0} ms", results.ElapsedTime);
@@ -81,7 +83,8 @@ namespace WebAPI
             var resultStr = "";
             try
             {
-                var solutionGrain = GrainClient.GrainFactory.GetGrain<ISolutionGrain>("Solution");
+				var grainClient = new ClientBuilder().Build();
+				var solutionGrain = grainClient.GetGrain<ISolutionGrain>("Solution");
 
                 var analysisClient = new AnalysisClient(solutionGrain, machines);
                 //var result = await analysisClient.ComputeRandomQueries(className, methodPrefix, numberOfMethods, repetitions, assemblyName, expID);
@@ -104,7 +107,8 @@ namespace WebAPI
             var resultStr = "";
             try
             {
-                var solutionGrain = GrainClient.GrainFactory.GetGrain<ISolutionGrain>("Solution");
+				var grainClient = new ClientBuilder().Build();
+				var solutionGrain = grainClient.GetGrain<ISolutionGrain>("Solution");
                 var analysisClient = new AnalysisClient(solutionGrain, machines);
                 var result = await analysisClient.ComputeRandomQueries(repetitions, expID);
                 var avgTime = result.Item1;
@@ -126,8 +130,9 @@ namespace WebAPI
 
             try
             {
-                var solutionGrain = GrainClient.GrainFactory.GetGrain<ISolutionGrain>("Solution");
-                await AnalysisClient.PerformDeactivation(GrainClient.GrainFactory, solutionGrain);
+				var grainClient = new ClientBuilder().Build();
+				var solutionGrain = grainClient.GetGrain<ISolutionGrain>("Solution");
+                await AnalysisClient.PerformDeactivation(grainClient, solutionGrain);
 
                 result = string.Format("All grains are deactivated");
             }
@@ -146,7 +151,9 @@ namespace WebAPI
             var result = string.Empty;
             try
             {
-                switch (command)
+				var grainClient = new ClientBuilder().Build();
+
+				switch (command)
                 {
                     case "Deactivate":
                         result = await PerformDeactivationAsync();
@@ -158,7 +165,7 @@ namespace WebAPI
                         result = AnalysisClient.EmptyTable("OrleansSiloStatistics").ToString() + " " + AnalysisClient.EmptyTable("OrleansClientStatistics").ToString();
                         break;
                     case "Stats":
-                        result = await AnalysisClient.PrintGrainStatistics(GrainClient.GrainFactory);
+                        result = await AnalysisClient.PrintGrainStatistics(grainClient);
                         break;
                     case "Status":
                         result = Convert.ToString(AnalysisClient.ExperimentStatus);
@@ -169,7 +176,7 @@ namespace WebAPI
                         }
                         break;
                     case "OperationsCount":
-                        result = await AnalysisClient.GetOperationsCount(GrainClient.GrainFactory);
+                        result = await AnalysisClient.GetOperationsCount(grainClient);
                         break;
                     case "Cancel":
                         await AnalysisClient.CancelExperimentAsync();
