@@ -94,17 +94,17 @@
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Orleans, Version=1.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Orleans.Core.1.5.1\lib\net461\Orleans.dll</HintPath>
+    <Reference Include="Orleans, Version=1.5.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Orleans.Core.1.5.5\lib\net461\Orleans.dll</HintPath>
     </Reference>
-    <Reference Include="OrleansAzureUtils, Version=1.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Orleans.OrleansAzureUtils.1.5.1\lib\net461\OrleansAzureUtils.dll</HintPath>
+    <Reference Include="OrleansAzureUtils, Version=1.5.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Orleans.OrleansAzureUtils.1.5.5\lib\net461\OrleansAzureUtils.dll</HintPath>
     </Reference>
-    <Reference Include="OrleansProviders, Version=1.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Orleans.OrleansProviders.1.5.1\lib\net461\OrleansProviders.dll</HintPath>
+    <Reference Include="OrleansProviders, Version=1.5.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Orleans.OrleansProviders.1.5.5\lib\net461\OrleansProviders.dll</HintPath>
     </Reference>
-    <Reference Include="OrleansRuntime, Version=1.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Orleans.OrleansRuntime.1.5.1\lib\net461\OrleansRuntime.dll</HintPath>
+    <Reference Include="OrleansRuntime, Version=1.5.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Orleans.OrleansRuntime.1.5.5\lib\net461\OrleansRuntime.dll</HintPath>
     </Reference>
     <Reference Include="RedDog.Storage, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RedDog.Storage.0.2.0.0\lib\net40\RedDog.Storage.dll</HintPath>
