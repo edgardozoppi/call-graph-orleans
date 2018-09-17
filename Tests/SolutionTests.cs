@@ -26,7 +26,7 @@ namespace Tests
 
 		[TestMethod]
 		[TestCategory("Solutions")]
-		[TestCategory("IncrementalAsync")]
+		//[TestCategory("IncrementalAsync")]
 		public void TestSolution1IncrementalOnDemandAsync()
 		{
 			TestSolution1Incremental(AnalysisStrategyKind.ONDEMAND_ASYNC);
