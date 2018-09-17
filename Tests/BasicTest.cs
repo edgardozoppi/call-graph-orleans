@@ -1639,6 +1639,7 @@ class Program
 			#region source code
 			var source = @"
 using System;
+using System.Collections.Generic;
 
 class Assert
 {
@@ -1721,7 +1722,7 @@ using System;
 
 static class StaticClass
 {
-	private static field;
+	private static int field;
 
 	public static void Foo(int x)
 	{
@@ -1780,7 +1781,7 @@ using System;
 
 class C
 {
-	private field;
+	private int field;
 
 	public int Field
 	{
