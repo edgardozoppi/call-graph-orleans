@@ -15,6 +15,7 @@ using System.Threading;
 using System.Text;
 using Microsoft.CodeAnalysis.MSBuild;
 using Common;
+using System.Runtime.ExceptionServices;
 
 namespace OrleansClient
 {
@@ -489,6 +490,33 @@ namespace OrleansClient
 				lastSolution = solution;
 			}
 
+			var diagnostics = ws.Diagnostics;
+
+			// print compilation errors and warnings
+			var solutionName = Path.GetFileNameWithoutExtension(solutionPath);
+			var errors = from diagnostic in diagnostics
+						 where diagnostic.Kind == WorkspaceDiagnosticKind.Failure
+						 select diagnostic.ToString();
+
+			if (errors.Any())
+			{
+				var fileName = string.Format("Solution {0}.txt", solutionName);
+				var folderName = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+				folderName = Path.Combine(folderName, "Roslyn compilation errors");
+				Directory.CreateDirectory(folderName);
+				fileName = Path.Combine(folderName, fileName);
+
+				Console.WriteLine("Failed to load solution {0}", solutionName);
+				Console.WriteLine("To see the error log open file: {0}", fileName);
+
+				File.WriteAllLines(fileName, errors);
+			}
+			else
+			{
+				Console.WriteLine("Solution {0} loaded successfully", solutionName);
+			}
+
 			return solution;
 		}
 
@@ -498,8 +526,16 @@ namespace OrleansClient
 			return solution;
 		}
 
+		//private static void OnFirstChanceException(object sender, FirstChanceExceptionEventArgs e)
+		//{
+		//
+		//}
+
 		public static async Task<Compilation> CompileProjectAsync(Project project, CancellationToken cancellationToken)
 		{
+
+			//AppDomain.CurrentDomain.FirstChanceException += OnFirstChanceException;
+
 			//Console.WriteLine("Project language {0}", project.Language);
 			var cancellationTokenSource = new CancellationTokenSource();
 			var compilation = await project.GetCompilationAsync(cancellationTokenSource.Token);
@@ -528,6 +564,8 @@ namespace OrleansClient
 			{
 				Console.WriteLine("Project {0} compiled successfully", project.Name);
 			}
+
+			//AppDomain.CurrentDomain.FirstChanceException -= OnFirstChanceException;
 
 			return compilation;
 		}
