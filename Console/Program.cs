@@ -175,7 +175,7 @@ namespace Console
 			System.Console.WriteLine(repoFolder);
 
 			System.Console.Error.WriteLine(solutionFileName);
-			System.Console.Error.Write("commit\ttime\treachable methods");
+			System.Console.Error.Write("commit\tmodified documents\tmodified methods\tcompilation time\ttotal time\treachable methods");
 
 			//CleanUpWorkingCopy(solutionFolder);
 
@@ -287,7 +287,7 @@ namespace Console
 				System.Console.WriteLine(repoFolder);
 
 				System.Console.Error.WriteLine(solutionFileName);
-				System.Console.Error.WriteLine("commit\tmodified methods\tmodified documents\ttime\treachable methods");
+				System.Console.Error.WriteLine("commit\tmodified documents\tmodified methods\tcompilation time\ttotal time\treachable methods");
 				System.Console.Error.Write(initialCommit);
 
 				//CleanUpWorkingCopy(solutionFolder);
@@ -378,6 +378,8 @@ namespace Console
 				System.Console.WriteLine("Starting incremental analysis...");
 				System.Console.WriteLine("Modified documents: {0}", modifiedDocuments.Count);
 
+				System.Console.Error.Write("\t{0}", modifiedDocuments.Count);
+
 				timer.Restart();
 
 				analyzer.ApplyModificationsAsync(modifiedDocuments).Wait();
@@ -397,7 +399,6 @@ namespace Console
 				System.Console.ForegroundColor = color;
 				System.Console.WriteLine();
 
-				System.Console.Error.Write("\t{0}", modifiedDocuments.Count);
 				System.Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
 				System.Console.Error.Write("\t{0}", reachableMethodsCount);
 
@@ -446,6 +447,8 @@ namespace Console
 		{
 			System.Console.WriteLine("Analyzing solution...");
 
+			System.Console.Error.Write("\t\t"); // modified documents, modified methods
+
 			var analyzer = SolutionAnalyzer.CreateFromSolution(GrainClient.Instance, solutionPath);
 			analyzer.RootKind = AnalysisRootKind.RootMethods;
 
@@ -468,7 +471,6 @@ namespace Console
 			System.Console.ForegroundColor = color;
 			System.Console.WriteLine();
 
-			System.Console.Error.Write("\t\t");
 			System.Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
 			System.Console.Error.Write("\t{0}", reachableMethodsCount);
 

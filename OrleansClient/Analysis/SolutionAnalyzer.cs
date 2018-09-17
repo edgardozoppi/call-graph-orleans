@@ -13,6 +13,7 @@ using OrleansClient.Analysis;
 using SolutionTraversal.CallGraph;
 using OrleansClient.Statistics;
 using Common;
+using System.Diagnostics;
 
 namespace OrleansClient.Analysis
 {
@@ -156,7 +157,9 @@ namespace OrleansClient.Analysis
 
         private async Task AnalyzeOnDemandAsync()
         {
-            if (this.source != null)
+			var timer = Stopwatch.StartNew();
+
+			if (this.source != null)
             {
                 this.SolutionManager = await AsyncSolutionManager.CreateFromSourceAsync(this.source);
             }
@@ -172,6 +175,10 @@ namespace OrleansClient.Analysis
 			{
 				throw new Exception("We need a solutionPath, source code or testName to analyze");
 			}
+
+			timer.Stop();
+
+			Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
 
 			var roots = await this.SolutionManager.GetRootsAsync(this.RootKind);
 			var orchestator = new AnalysisOrchestrator(this.SolutionManager);

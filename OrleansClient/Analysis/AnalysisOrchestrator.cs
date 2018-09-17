@@ -724,8 +724,13 @@ namespace OrleansClient.Analysis
 
 			var calleesInfo = new List<CallInfo>();
 			var callersInfo = new List<ReturnInfo>();
+
+			var timer = Stopwatch.StartNew();
+
 			var modifications = await this.solutionManager.GetModificationsAsync(modifiedDocuments.ToList());
 
+			timer.Stop();
+			
 			var methodsRemoved = (from m in modifications
 								  where m.ModificationKind == ModificationKind.MethodRemoved
 								  select m.MethodDescriptor)
@@ -758,6 +763,7 @@ namespace OrleansClient.Analysis
 			Console.WriteLine("Total methods: {0}", totalMethodsCount);
 
 			Console.Error.Write("\t{0}", totalMethodsCount);
+			Console.Error.Write("\t{0}", timer.ElapsedMilliseconds);
 
 			var methodsRemovedOrUpdated = methodsRemoved.Union(methodsUpdated);
 			var methodsAddedOrUpdated = methodsAdded.Union(methodsUpdated);
