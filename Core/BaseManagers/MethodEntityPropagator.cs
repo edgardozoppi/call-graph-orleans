@@ -338,6 +338,8 @@ namespace OrleansClient.Analysis
 
 			var effects = await InternalPropagateAsync(callMessageInfo.PropagationKind);
 			Logger.LogS("MethodEntityGrain", "PropagateAsync-call", "End Propagation for {0} ", callMessageInfo.Callee);
+
+			this.newCallContext = null;
 			return effects;
 		}
 
@@ -735,7 +737,8 @@ namespace OrleansClient.Analysis
 					callInfo.ArgumentsAllTypes.Add(allTypes);
 				}
 
-				callInfo.ModifiedCallees.UnionWith(callNode.PossibleCallees);
+				//callInfo.ModifiedCallees.UnionWith(callNode.PossibleCallees);
+				callInfo.AllCallees.UnionWith(callNode.PossibleCallees);
 				effects.CalleesInfo.Add(callInfo);
 			}
 

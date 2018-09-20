@@ -66,6 +66,9 @@ namespace Console
 				// 100 commits OK
 				@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "3841eacd 441dc0bf cb6cc4a2 a9cb5a23 136ef977 4f6e969c 18450108 1219ef78 688ea9d6 26a32d2d 691d1e36 1a9205f9 0d6af0b3 204d6c2f 635ea7a2 b4362c09 38773f06 50495242 7fc5c515 89820bad 295749d7 c2736389 10d7476a 2fc7163e b01e7aa0 80ee2742 718dd711 de66d1e9 15e06f1f 4dccf81b 6bc7e0c4 5a03cad9 e19c60f8 3c8f5a1f 2d583800 0d524dca 7b306667 4b432f17 d653c02b 23fe2271 26fbf92f 0e76707a d98060f1 bbf00ed7 f8c57a4d 522b52a8 fa85ab2f aeec1ad4 815cc3ee a600de8e 096ab1c7 1c84e730 fddd843f 6d324d3f eee34635 27398925 9a3f8725 77de435a cc6df456 0b94f69b b3640f6f 1191f1b2 6f4854b4 ec034076 da2c9844 f7eda15a 08d91a25 cb91274d 240a8ceb 46e86d91 8dbbcad2 757e4b0e 468bccbc f5175e89 8131eeb7 009ee9d2 b4abf36b b2cbc035 6dd07cb8 2f15401d 2a5370c1 48681af9 0c36f823 6ee3e305 1a9888e0 1f593181 3741435f a51cdefb 226ccd9a 3e9d67dc cadd9c7f 4ea6ce88 308e20be 2967ef26 fefca5ee e802b050 6ef221a6 ce32d0bb 1bbd68c0 a19e6afe"
 
+				// Debugging error
+				//@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "1219ef78 688ea9d6 26a32d2d 691d1e36 1a9205f9 0d6af0b3 204d6c2f 635ea7a2 b4362c09 38773f06 50495242 7fc5c515 89820bad 295749d7 c2736389"
+
 				// commit 191d2946: Changing top 5 methods with max callees.
 				//@"C:\Users\Edgar\Repositories\ShareX\ShareX.sln", "OnDemandAsync", "3841eacd 191d2946"
 				// commit 82cf2b98: Changing top 5 methods with min callees.
